@@ -54,6 +54,7 @@ function App() {
   const boardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const trayRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const animationTimerRef = useRef<number | null>(null)
+  const queuedSelectionRef = useRef<Selection | null>(null)
   const level = levels[levelIndex]
   const selectedCellIds = selection?.source === 'board' ? new Set(selection.cellIds) : new Set<string>()
   const isAnimating = flyingGems.length > 0
@@ -96,25 +97,33 @@ function App() {
     setCells(cloneCells(nextLevel))
     setTray(createTray(traySize))
     setSelection(null)
+    queuedSelectionRef.current = null
     setFlyingGems([])
     setToast('点击棋盘上的宝石，选中同色连通块')
     setTimeLeft(nextLevel.timeLimitSeconds)
     setStatus('playing')
   }
 
-  const completeMove = (nextCells: Cell[], nextTray: TraySlot[], message: string) => {
+  const completeMove = (nextCells: Cell[], nextTray: TraySlot[], message: string, nextSelection = queuedSelectionRef.current) => {
     setCells(nextCells)
     setTray(nextTray)
-    setSelection(null)
+    setSelection(nextSelection)
+    queuedSelectionRef.current = null
     setToast(message)
     if (isLevelSolved(nextCells, nextTray)) {
       setStatus(getCompletionProgress(levelIndex, levels.length).status)
     }
   }
 
-  const animateMove = (flights: FlyingGem[], nextCells: Cell[], nextTray: TraySlot[], message: string) => {
+  const animateMove = (
+    flights: FlyingGem[],
+    nextCells: Cell[],
+    nextTray: TraySlot[],
+    message: string,
+    nextSelection: Selection | null = queuedSelectionRef.current,
+  ) => {
     if (flights.length === 0) {
-      completeMove(nextCells, nextTray, message)
+      completeMove(nextCells, nextTray, message, nextSelection)
       return
     }
 
@@ -124,7 +133,7 @@ function App() {
       () => {
         setFlyingGems([])
         animationTimerRef.current = null
-        completeMove(nextCells, nextTray, message)
+        completeMove(nextCells, nextTray, message, nextSelection)
       },
       flightDurationMs + (flights.length - 1) * flightStaggerMs,
     )
@@ -143,7 +152,9 @@ function App() {
         .filter((slot) => slot.gemColor === selection.color)
         .map((slot) => slot.id)
         .slice(0, result.placedCellIds.length)
+      const remainingTrayGemCount = tray.filter((slot) => slot.gemColor === selection.color).length - result.placedCellIds.length
       const flights = createFlights('tray', sourceSlotIds, result.placedCellIds, selection.color, trayRefs.current, boardRefs.current)
+      queuedSelectionRef.current = remainingTrayGemCount > 0 ? selection : null
       animateMove(flights, result.cells, result.tray, `放入 ${result.placedCellIds.length} 颗${colorLabel(selection.color)}宝石`)
       return
     }
@@ -155,7 +166,9 @@ function App() {
         return
       }
       const partial = result.movedCellIds.length < selection.cellIds.length
+      const remainingCellIds = getUnmovedCellIds(selection.cellIds, result.movedCellIds)
       const flights = createFlights('board', result.movedCellIds, result.placedCellIds, selection.color, boardRefs.current, boardRefs.current)
+      queuedSelectionRef.current = partial ? { source: 'board', color: selection.color, cellIds: remainingCellIds } : null
       animateMove(
         flights,
         result.cells,
@@ -193,11 +206,13 @@ function App() {
         return
       }
       const partial = result.movedCellIds.length < selection.cellIds.length
+      const remainingCellIds = getUnmovedCellIds(selection.cellIds, result.movedCellIds)
       const targetSlotIds = tray
         .filter((traySlot) => !traySlot.gemColor)
         .map((traySlot) => traySlot.id)
         .slice(0, result.movedCellIds.length)
       const flights = createFlights('board', result.movedCellIds, targetSlotIds, selection.color, boardRefs.current, trayRefs.current)
+      queuedSelectionRef.current = partial ? { source: 'board', color: selection.color, cellIds: remainingCellIds } : null
       animateMove(
         flights,
         result.cells,
@@ -486,6 +501,11 @@ function getFlightStyle(gem: FlyingGem): CSSProperties {
     '--flight-x': `${gem.to.left - gem.from.left}px`,
     '--flight-y': `${gem.to.top - gem.from.top}px`,
   } as CSSProperties
+}
+
+function getUnmovedCellIds(selectedCellIds: string[], movedCellIds: string[]) {
+  const moved = new Set(movedCellIds)
+  return selectedCellIds.filter((id) => !moved.has(id))
 }
 
 function cloneCells(level: Level): Cell[] {

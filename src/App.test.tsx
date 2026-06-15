@@ -9,6 +9,18 @@ const finishAnimation = () => {
   })
 }
 
+const getBoardButtonAt = (coordinate: string) => {
+  const button = screen.getAllByRole('button').find((element) => element.getAttribute('aria-label')?.endsWith(` ${coordinate}`))
+  if (!button) throw new Error(`Board button ${coordinate} not found`)
+  return button
+}
+
+const getTrayButton = (slotNumber: number) => {
+  const button = document.querySelectorAll<HTMLButtonElement>('.tray-slot')[slotNumber - 1]
+  if (!button) throw new Error(`Tray slot ${slotNumber} not found`)
+  return button
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -39,6 +51,20 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '第1关 蓝色宝石 5,4' })).toBeInTheDocument()
   })
 
+  it('keeps unmoved board gems selected after a partial move to the tray', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('5,4'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(2))
+    finishAnimation()
+
+    expect(document.querySelectorAll('.cell.selected').length).toBeGreaterThan(0)
+  })
+
   it('moves selected board gems directly into matching empty board cells', async () => {
     vi.useFakeTimers()
     render(<App />)
@@ -56,6 +82,20 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: '第1关 蓝色宝石 5,1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '第1关 红色空格 1,0' })).toBeInTheDocument()
+  })
+
+  it('keeps unmoved board gems selected after a partial move to the board', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('5,4'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getBoardButtonAt('5,1'))
+    fireEvent.click(getBoardButtonAt('5,4'))
+    finishAnimation()
+
+    expect(document.querySelectorAll('.cell.selected').length).toBeGreaterThan(0)
   })
 
   it('moves tray gems into matching board cells after the flight animation', async () => {
