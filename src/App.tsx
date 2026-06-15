@@ -10,6 +10,7 @@ import {
   moveTraySelectionToBoard,
 } from './game/gameLogic'
 import type { Cell, GemColor, Level, Selection, TraySlot } from './game/types'
+import { getCompletionProgress } from './levelProgression'
 import { levels } from './levels'
 
 const traySize = 12
@@ -48,7 +49,7 @@ function App() {
   const [selection, setSelection] = useState<Selection | null>(null)
   const [toast, setToast] = useState('点击棋盘上的宝石，选中同色连通块')
   const [timeLeft, setTimeLeft] = useState(levels[0].timeLimitSeconds)
-  const [status, setStatus] = useState<'playing' | 'won' | 'failed'>('playing')
+  const [status, setStatus] = useState<'playing' | 'won' | 'completed' | 'failed'>('playing')
   const [flyingGems, setFlyingGems] = useState<FlyingGem[]>([])
   const boardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const trayRefs = useRef<Record<string, HTMLButtonElement | null>>({})
@@ -107,7 +108,7 @@ function App() {
     setSelection(null)
     setToast(message)
     if (isLevelSolved(nextCells, nextTray)) {
-      setStatus('won')
+      setStatus(getCompletionProgress(levelIndex, levels.length).status)
     }
   }
 
@@ -280,8 +281,14 @@ function App() {
           won={status === 'won'}
           level={level}
           cells={cells}
+          completed={status === 'completed'}
           onRetry={() => resetLevel()}
-          onNext={() => resetLevel((levelIndex + 1) % levels.length)}
+          onNext={() => {
+            const progress = getCompletionProgress(levelIndex, levels.length)
+            if (progress.nextLevelIndex !== null) {
+              resetLevel(progress.nextLevelIndex)
+            }
+          }}
         />
       )}
     </main>
@@ -379,17 +386,19 @@ type WinModalProps = {
   won: boolean
   level: Level
   cells: Cell[]
+  completed: boolean
   onRetry: () => void
   onNext: () => void
 }
 
-function WinModal({ won, level, cells, onRetry, onNext }: WinModalProps) {
+function WinModal({ won, level, cells, completed, onRetry, onNext }: WinModalProps) {
   const metrics = getBoardMetrics(cells)
+  const isSuccess = won || completed
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={won ? '作品完成' : '时间结束'}>
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={isSuccess ? '作品完成' : '时间结束'}>
       <div className="result-modal">
-        <div className="ribbon">{won ? '作品完成' : '时间结束'}</div>
+        <div className="ribbon">{completed ? '全部完成' : won ? '作品完成' : '时间结束'}</div>
         <div
           className="mini-board"
           aria-hidden="true"
@@ -409,11 +418,11 @@ function WinModal({ won, level, cells, onRetry, onNext }: WinModalProps) {
             />
           ))}
         </div>
-        <div className="reward">{won ? `${level.title} +2` : '再试一次'}</div>
+        <div className="reward">{completed ? '所有关卡已通关' : won ? `${level.title} +2` : '再试一次'}</div>
         <button className="retry-button" type="button" onClick={onRetry}>
           再玩一次
         </button>
-        {won && (
+        {won && !completed && (
           <button className="next-button" type="button" onClick={onNext}>
             下一关
           </button>
