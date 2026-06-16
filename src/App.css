@@ -337,6 +337,69 @@
   background: rgb(20 24 35 / 78%);
 }
 
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: grid;
+  place-items: start center;
+  padding: 120px 20px 20px;
+  background: rgb(38 46 66 / 42%);
+}
+
+.settings-panel {
+  width: min(88vw, 360px);
+  border: 4px solid #f8fbff;
+  border-radius: 18px;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  background: #f6fbff;
+  box-shadow: 0 10px 24px rgb(35 46 72 / 26%);
+}
+
+.settings-panel h2 {
+  margin: 0;
+  color: #4d5878;
+  font-size: 26px;
+  line-height: 1;
+  text-align: center;
+}
+
+.settings-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-actions button,
+.level-picker button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  color: #43506e;
+  background: #e5edf7;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 72%), 0 2px 0 rgb(126 147 178 / 24%);
+}
+
+.settings-actions .settings-primary {
+  color: #fff;
+  background: linear-gradient(180deg, #82d784, #47b76a);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 18%);
+}
+
+.level-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.level-picker button.active {
+  color: #fff;
+  background: #6e8fa1;
+}
+
 .result-modal {
   width: min(88vw, 390px);
   border-radius: 22px;

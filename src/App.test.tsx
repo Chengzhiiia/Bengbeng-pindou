@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -134,5 +134,61 @@ describe('App', () => {
     finishAnimation()
 
     expect(screen.getAllByRole('button', { name: /暂存槽 \d+ 蓝色宝石/ })).toHaveLength(12)
+  })
+
+  it('opens settings without restarting the current board', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+
+    fireEvent.click(screen.getByRole('button', { name: '设置' }))
+
+    const dialog = screen.getByRole('dialog', { name: '设置与暂停' })
+
+    expect(dialog).toBeInTheDocument()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '继续' }))
+
+    expect(screen.queryByRole('dialog', { name: '设置与暂停' })).not.toBeInTheDocument()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+  })
+
+  it('lets the settings panel restart the current level', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(screen.getByRole('button', { name: '设置' }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '重开本关' }))
+
+    expect(screen.queryByRole('dialog', { name: '设置与暂停' })).not.toBeInTheDocument()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('空')
+    expect(getBoardButtonAt('1,0').getAttribute('aria-label')).toContain('蓝色宝石')
+  })
+
+  it('pauses the timer while settings are open and can switch levels', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    expect(screen.getByText('05:00')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '设置' }))
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+
+    expect(screen.getByText('05:00')).toBeInTheDocument()
+
+    fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
+
+    expect(screen.queryByRole('dialog', { name: '设置与暂停' })).not.toBeInTheDocument()
+    expect(screen.getByText('第2关 小屋')).toBeInTheDocument()
+    expect(screen.getByText('05:00')).toBeInTheDocument()
   })
 })

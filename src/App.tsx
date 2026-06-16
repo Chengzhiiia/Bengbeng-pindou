@@ -51,6 +51,7 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(levels[0].timeLimitSeconds)
   const [status, setStatus] = useState<'playing' | 'won' | 'completed' | 'failed'>('playing')
   const [flyingGems, setFlyingGems] = useState<FlyingGem[]>([])
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const boardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const trayRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const animationTimerRef = useRef<number | null>(null)
@@ -62,7 +63,7 @@ function App() {
   const hiddenTraySlotIds = new Set(flyingGems.filter((gem) => gem.source === 'tray').map((gem) => gem.fromId))
 
   useEffect(() => {
-    if (status !== 'playing') return
+    if (status !== 'playing' || isSettingsOpen) return
     const timer = window.setInterval(() => {
       setTimeLeft((current) => {
         if (current <= 1) {
@@ -75,7 +76,7 @@ function App() {
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [status, levelIndex])
+  }, [status, levelIndex, isSettingsOpen])
 
   useEffect(() => {
     return () => {
@@ -99,6 +100,7 @@ function App() {
     setSelection(null)
     queuedSelectionRef.current = null
     setFlyingGems([])
+    setIsSettingsOpen(false)
     setToast('点击棋盘上的宝石，选中同色连通块')
     setTimeLeft(nextLevel.timeLimitSeconds)
     setStatus('playing')
@@ -246,7 +248,7 @@ function App() {
             <span>{formatTime(timeLeft)}</span>
           </div>
         </div>
-        <button className="icon-button" type="button" onClick={() => resetLevel()} aria-label="设置">
+        <button className="icon-button" type="button" onClick={() => setIsSettingsOpen(true)} aria-label="设置">
           ⚙
         </button>
       </header>
@@ -304,6 +306,17 @@ function App() {
               resetLevel(progress.nextLevelIndex)
             }
           }}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsPanel
+          currentLevelIndex={levelIndex}
+          levels={levels}
+          onContinue={() => setIsSettingsOpen(false)}
+          onRestart={() => resetLevel()}
+          onFirstLevel={() => resetLevel(0)}
+          onSelectLevel={(nextIndex) => resetLevel(nextIndex)}
         />
       )}
     </main>
@@ -395,6 +408,49 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
 
 function Gem({ color, small = false }: { color: GemColor; small?: boolean }) {
   return <span className={`gem ${colorClass[color]} ${small ? 'gem-small' : ''}`} />
+}
+
+type SettingsPanelProps = {
+  currentLevelIndex: number
+  levels: Level[]
+  onContinue: () => void
+  onRestart: () => void
+  onFirstLevel: () => void
+  onSelectLevel: (levelIndex: number) => void
+}
+
+function SettingsPanel({ currentLevelIndex, levels, onContinue, onRestart, onFirstLevel, onSelectLevel }: SettingsPanelProps) {
+  return (
+    <div className="settings-backdrop" role="dialog" aria-modal="true" aria-label="设置与暂停">
+      <div className="settings-panel">
+        <h2>暂停</h2>
+        <div className="settings-actions">
+          <button className="settings-primary" type="button" onClick={onContinue}>
+            继续
+          </button>
+          <button type="button" onClick={onRestart}>
+            重开本关
+          </button>
+          <button type="button" onClick={onFirstLevel}>
+            返回第 1 关
+          </button>
+        </div>
+        <div className="level-picker" aria-label="切关入口">
+          {levels.map((level, index) => (
+            <button
+              key={level.id}
+              type="button"
+              className={index === currentLevelIndex ? 'active' : ''}
+              aria-pressed={index === currentLevelIndex}
+              onClick={() => onSelectLevel(index)}
+            >
+              第 {index + 1} 关
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 type WinModalProps = {
