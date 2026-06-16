@@ -335,15 +335,16 @@ type BoardProps = {
 
 function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellClick, registerCellRef }: BoardProps) {
   return (
-    <div
-      className="board"
-      role="grid"
-      aria-label="拼豆棋盘"
-      style={{
-        gridTemplateColumns: `repeat(${metrics.columns}, var(--cell-size))`,
-        gridTemplateRows: `repeat(${metrics.rows}, var(--cell-size))`,
-      }}
-    >
+    <div className="board-viewport">
+      <div
+        className="board"
+        role="grid"
+        aria-label="拼豆棋盘"
+        style={{
+          gridTemplateColumns: `repeat(${metrics.columns}, var(--cell-size))`,
+          gridTemplateRows: `repeat(${metrics.rows}, var(--cell-size))`,
+        }}
+      >
       {cells.map((cell) => (
         <div
           key={cell.id}
@@ -365,6 +366,7 @@ function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellCli
           </button>
         </div>
       ))}
+      </div>
     </div>
   )
 }
