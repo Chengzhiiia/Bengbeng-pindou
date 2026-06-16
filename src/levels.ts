@@ -21,32 +21,115 @@ const makeLevel = (
 })
 
 const largeBoardColors: GemColor[] = ['red', 'blue', 'yellow', 'green', 'purple']
-const largeBoardWidth = 20
-const largeBoardHeight = 12
+type RowSpans = Array<[number, number]>
 
-const makeLargeLevel = (id: number, title: string, patternSlope: number): Level =>
-  makeLevel(id, title, 300, makeLargeLevelSpecs(patternSlope))
+const makeShapedLevel = (id: number, title: string, rows: RowSpans[]): Level =>
+  makeLevel(id, title, 300, makeShapedLevelSpecs(rows))
 
-function makeLargeLevelSpecs(patternSlope: number): Array<[number, number, GemColor, GemColor]> {
-  const specs: Array<[number, number, GemColor, GemColor]> = []
+function makeShapedLevelSpecs(rows: RowSpans[]): Array<[number, number, GemColor, GemColor]> {
+  const positions = rows.flatMap((spans, y) =>
+    spans.flatMap(([startX, endX]) =>
+      Array.from({ length: endX - startX + 1 }, (_, offset) => ({ x: startX + offset, y })),
+    ),
+  )
+  const minX = Math.min(...positions.map(({ x }) => x))
+  const maxX = Math.max(...positions.map(({ x }) => x))
+  const width = maxX - minX + 1
+  const gemColors = positions.map(({ x }) => {
+    const colorIndex = Math.min(largeBoardColors.length - 1, Math.floor(((x - minX) / width) * largeBoardColors.length))
+    return largeBoardColors[colorIndex]
+  })
+  const targetColors = makeBalancedTargetColors(gemColors)
 
-  for (let y = 0; y < largeBoardHeight; y += 1) {
-    for (let x = 0; x < largeBoardWidth; x += 1) {
-      specs.push([x, y, targetColorFor(x, y, patternSlope), gemColorFor(x)])
-    }
-  }
-
-  return specs
+  return positions.map(({ x, y }, index) => [x, y, targetColors[index], gemColors[index]])
 }
 
-function gemColorFor(x: number): GemColor {
-  return largeBoardColors[Math.floor(x / 4)]
+function makeBalancedTargetColors(gemColors: GemColor[]): GemColor[] {
+  const offset = Math.ceil(gemColors.length / 2)
+  return gemColors.map((_, index) => gemColors[(index + offset) % gemColors.length])
 }
 
-function targetColorFor(x: number, y: number, patternSlope: number): GemColor {
-  const colorIndex = Math.floor(((x + y * patternSlope + 4) % largeBoardWidth) / 4)
-  return largeBoardColors[colorIndex]
-}
+const houseRows: RowSpans[] = [
+  [[11, 14]],
+  [[9, 16]],
+  [[7, 18]],
+  [[5, 20]],
+  [[3, 22]],
+  [[2, 23]],
+  [[2, 23]],
+  [[2, 23]],
+  [[2, 23]],
+  [[2, 23]],
+  [[2, 23]],
+  [[2, 23]],
+  [[4, 21]],
+]
+
+const cupRows: RowSpans[] = [
+  [[5, 18]],
+  [[4, 19]],
+  [[3, 20]],
+  [[2, 21], [23, 24]],
+  [[2, 21], [23, 24]],
+  [[2, 21], [22, 24]],
+  [[2, 21], [21, 24]],
+  [[3, 20], [21, 23]],
+  [[4, 19]],
+  [[5, 18]],
+  [[4, 19]],
+  [[3, 20]],
+  [[1, 22]],
+]
+
+const lampRows: RowSpans[] = [
+  [[9, 16]],
+  [[7, 18]],
+  [[5, 20]],
+  [[4, 21]],
+  [[3, 22]],
+  [[4, 21]],
+  [[5, 20]],
+  [[7, 18]],
+  [[11, 14]],
+  [[11, 14]],
+  [[10, 15]],
+  [[9, 16]],
+  [[6, 19]],
+  [[4, 21]],
+  [[2, 23]],
+  [[1, 24]],
+]
+
+const giftRows: RowSpans[] = [
+  [[4, 9], [14, 19]],
+  [[3, 20]],
+  [[2, 21]],
+  [[2, 21]],
+  [[2, 21]],
+  [[2, 21]],
+  [[2, 21]],
+  [[2, 21]],
+  [[2, 21]],
+  [[3, 20]],
+  [[4, 19]],
+  [[5, 18]],
+]
+
+const roomRows: RowSpans[] = [
+  [[8, 15]],
+  [[6, 17]],
+  [[4, 19]],
+  [[3, 20]],
+  [[2, 21]],
+  [[2, 21]],
+  [[1, 22]],
+  [[1, 22]],
+  [[2, 21]],
+  [[2, 21]],
+  [[3, 20]],
+  [[5, 18]],
+  [[7, 16]],
+]
 
 export const levels: Level[] = [
   makeLevel(1, '第1关', 300, [
@@ -79,11 +162,11 @@ export const levels: Level[] = [
     [5, 4, 'red', 'blue'],
     [5, 5, 'red', 'red'],
   ]),
-  makeLargeLevel(2, '第2关 小屋', 1),
-  makeLargeLevel(3, '第3关 茶杯', 3),
-  makeLargeLevel(4, '第4关 台灯', 5),
-  makeLargeLevel(5, '第5关 礼物相框', 7),
-  makeLargeLevel(6, '第6关 温馨客厅', 9),
+  makeShapedLevel(2, '第2关 小屋', houseRows),
+  makeShapedLevel(3, '第3关 茶杯', cupRows),
+  makeShapedLevel(4, '第4关 台灯', lampRows),
+  makeShapedLevel(5, '第5关 礼物相框', giftRows),
+  makeShapedLevel(6, '第6关 温馨客厅', roomRows),
 ]
 
 export function validateLevel(level: Level): string[] {

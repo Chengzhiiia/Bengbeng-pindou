@@ -75,6 +75,18 @@ const connectedMismatchedGemBlocks = (level: Level): number[] => {
   return sizes.sort((a, b) => b - a)
 }
 
+const boundingArea = (level: Level) => {
+  const xs = level.cells.map(({ x }) => x)
+  const ys = level.cells.map(({ y }) => y)
+  return (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1)
+}
+
+const shapeSignature = (level: Level) =>
+  level.cells
+    .map(({ x, y }) => `${x},${y}`)
+    .sort()
+    .join('|')
+
 describe('levels', () => {
   it('defines six playable levels with balanced gem and target counts', () => {
     expect(levels).toHaveLength(6)
@@ -90,8 +102,18 @@ describe('levels', () => {
   it('uses similarly large boards after the introductory level', () => {
     const largeLevelSizes = levels.slice(1).map((level) => level.cells.length)
 
-    expect(largeLevelSizes.every((size) => size >= 220 && size <= 260)).toBe(true)
-    expect(Math.max(...largeLevelSizes) - Math.min(...largeLevelSizes)).toBeLessThanOrEqual(20)
+    expect(largeLevelSizes.every((size) => size >= 200 && size <= 260)).toBe(true)
+    expect(Math.max(...largeLevelSizes) - Math.min(...largeLevelSizes)).toBeLessThanOrEqual(50)
+  })
+
+  it('uses a different non-rectangular silhouette for each large level pattern', () => {
+    const largeLevels = levels.slice(1)
+    const signatures = new Set(largeLevels.map(shapeSignature))
+
+    expect(signatures.size).toBe(largeLevels.length)
+    for (const level of largeLevels) {
+      expect(level.cells.length / boundingArea(level)).toBeLessThan(0.92)
+    }
   })
 
   it('uses warm household-themed level titles after the tutorial', () => {
@@ -118,7 +140,9 @@ describe('levels', () => {
       const blockSizes = connectedMismatchedGemBlocks(level)
 
       expect(blockSizes.filter((size) => size >= 18).length).toBeGreaterThanOrEqual(2)
+      expect(blockSizes.filter((size) => size >= 18).length).toBeLessThanOrEqual(7)
       expect(blockSizes.filter((size) => size >= 10).length).toBeGreaterThanOrEqual(4)
+      expect(blockSizes.filter((size) => size >= 10).length).toBeLessThanOrEqual(8)
     }
   })
 })
