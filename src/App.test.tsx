@@ -34,6 +34,16 @@ describe('App', () => {
     expect(screen.getAllByRole('button', { name: /暂存槽/ })).toHaveLength(12)
   })
 
+  it('renders the board inside a scrollable viewport without changing tray capacity', () => {
+    render(<App />)
+
+    const board = document.querySelector('[role="grid"]')
+    const viewport = board?.closest('.board-viewport')
+
+    expect(viewport).toBeInTheDocument()
+    expect(document.querySelectorAll('.tray-slot')).toHaveLength(12)
+  })
+
   it('partially moves a large selected board group when the tray has limited space', async () => {
     vi.useFakeTimers()
     render(<App />)
@@ -188,7 +198,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(screen.queryByRole('dialog', { name: '设置与暂停' })).not.toBeInTheDocument()
-    expect(screen.getByText('第2关 小屋')).toBeInTheDocument()
+    expect(screen.getByText('第2关 洗澡小狗')).toBeInTheDocument()
     expect(screen.getByText('05:00')).toBeInTheDocument()
   })
 })

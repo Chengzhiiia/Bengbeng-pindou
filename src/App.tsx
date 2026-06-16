@@ -17,7 +17,7 @@ const traySize = 12
 const flightDurationMs = 260
 const flightStaggerMs = 20
 
-const colorClass: Record<GemColor, string> = {
+const presetColorClass: Record<string, string> = {
   red: 'gem-red',
   blue: 'gem-blue',
   yellow: 'gem-yellow',
@@ -286,8 +286,8 @@ function App() {
             <span
               key={gem.id}
               data-testid="flying-gem"
-              className={`gem flying-gem ${colorClass[gem.color]}`}
-              style={getFlightStyle(gem)}
+              className={`gem flying-gem ${gemClassFor(gem.color)}`}
+              style={{ ...getFlightStyle(gem), ...gemColorStyle(gem.color) }}
             />
           ))}
         </div>
@@ -335,23 +335,25 @@ type BoardProps = {
 
 function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellClick, registerCellRef }: BoardProps) {
   return (
-    <div
-      className="board"
-      role="grid"
-      aria-label="拼豆棋盘"
-      style={{
-        gridTemplateColumns: `repeat(${metrics.columns}, var(--cell-size))`,
-        gridTemplateRows: `repeat(${metrics.rows}, var(--cell-size))`,
-      }}
-    >
+    <div className="board-viewport">
+      <div
+        className="board"
+        role="grid"
+        aria-label="拼豆棋盘"
+        style={{
+          gridTemplateColumns: `repeat(${metrics.columns}, var(--cell-size))`,
+          gridTemplateRows: `repeat(${metrics.rows}, var(--cell-size))`,
+        }}
+      >
       {cells.map((cell) => (
         <div
           key={cell.id}
           role="gridcell"
-          className={`cell target-${cell.targetColor} ${selectedCellIds.has(cell.id) ? 'selected' : ''}`}
+          className={`cell ${targetClassFor(cell.targetColor)} ${selectedCellIds.has(cell.id) ? 'selected' : ''}`}
           style={{
             gridColumn: cell.x - metrics.minX + 1,
             gridRow: cell.y - metrics.minY + 1,
+            ...targetColorStyle(cell.targetColor),
           }}
         >
           <button
@@ -365,6 +367,7 @@ function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellCli
           </button>
         </div>
       ))}
+      </div>
     </div>
   )
 }
@@ -407,7 +410,7 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
 }
 
 function Gem({ color, small = false }: { color: GemColor; small?: boolean }) {
-  return <span className={`gem ${colorClass[color]} ${small ? 'gem-small' : ''}`} />
+  return <span className={`gem ${gemClassFor(color)} ${small ? 'gem-small' : ''}`} style={gemColorStyle(color)} />
 }
 
 type SettingsPanelProps = {
@@ -481,10 +484,11 @@ function WinModal({ won, level, cells, completed, onRetry, onNext }: WinModalPro
           {cells.map((cell) => (
             <span
               key={cell.id}
-              className={`mini-cell target-${cell.targetColor}`}
+              className={`mini-cell ${targetClassFor(cell.targetColor)}`}
               style={{
                 gridColumn: cell.x - metrics.minX + 1,
                 gridRow: cell.y - metrics.minY + 1,
+                ...targetColorStyle(cell.targetColor),
               }}
             />
           ))}
@@ -582,6 +586,42 @@ function getBoardMetrics(cells: Cell[]) {
     columns: maxX - minX + 1,
     rows: maxY - minY + 1,
   }
+}
+
+function gemClassFor(color: GemColor) {
+  return presetColorClass[color] ?? 'gem-custom'
+}
+
+function targetClassFor(color: GemColor) {
+  return presetColorClass[color] ? `target-${color}` : 'target-custom'
+}
+
+function gemColorStyle(color: GemColor): CSSProperties {
+  if (presetColorClass[color]) return {}
+  return {
+    '--gem-color': color,
+    '--gem-shadow': shadeHexColor(color, -26),
+  } as CSSProperties
+}
+
+function targetColorStyle(color: GemColor): CSSProperties {
+  if (presetColorClass[color]) return {}
+  return {
+    '--target-color': color,
+    '--target-shadow': shadeHexColor(color, -22),
+  } as CSSProperties
+}
+
+function shadeHexColor(color: GemColor, percent: number) {
+  if (!color.startsWith('#') || color.length !== 7) return color
+  const amount = Math.round((percent / 100) * 255)
+  const channel = (start: number) => Math.max(0, Math.min(255, start + amount))
+  const value = Number.parseInt(color.slice(1), 16)
+  const red = channel((value >> 16) & 255)
+  const green = channel((value >> 8) & 255)
+  const blue = channel(value & 255)
+
+  return `#${[red, green, blue].map((component) => component.toString(16).padStart(2, '0')).join('')}`
 }
 
 function formatTime(seconds: number) {
