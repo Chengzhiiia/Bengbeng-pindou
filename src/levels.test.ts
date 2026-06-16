@@ -121,6 +121,9 @@ const shapeSignature = (level: Level) =>
     .sort()
     .join('|')
 
+const hasCell = (level: Level, x: number, y: number) =>
+  level.cells.some((cell) => cell.x === x && cell.y === y)
+
 describe('levels', () => {
   it('defines six playable levels with balanced gem and target counts', () => {
     expect(levels).toHaveLength(6)
@@ -153,12 +156,25 @@ describe('levels', () => {
   it('uses warm household-themed level titles after the tutorial', () => {
     expect(levels.map((level) => level.title)).toEqual([
       '第1关',
-      '第2关 小屋',
+      '第2关 洗澡小狗',
       '第3关 茶杯',
       '第4关 台灯',
       '第5关 礼物相框',
       '第6关 温馨客厅',
     ])
+  })
+
+  it('uses a bathing dog silhouette for the second level', () => {
+    const secondLevel = levels[1]
+
+    expect(hasCell(secondLevel, 1, 2)).toBe(true)
+    expect(hasCell(secondLevel, 8, 0)).toBe(true)
+    expect(hasCell(secondLevel, 5, 8)).toBe(true)
+    expect(hasCell(secondLevel, 21, 9)).toBe(true)
+    expect(hasCell(secondLevel, 23, 10)).toBe(true)
+    expect(hasCell(secondLevel, 2, 12)).toBe(true)
+    expect(hasCell(secondLevel, 20, 2)).toBe(false)
+    expect(hasCell(secondLevel, 13, 0)).toBe(false)
   })
 
   it('adds color variety from the second level onward', () => {

@@ -198,7 +198,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(screen.queryByRole('dialog', { name: '设置与暂停' })).not.toBeInTheDocument()
-    expect(screen.getByText('第2关 小屋')).toBeInTheDocument()
+    expect(screen.getByText('第2关 洗澡小狗')).toBeInTheDocument()
     expect(screen.getByText('05:00')).toBeInTheDocument()
   })
 })

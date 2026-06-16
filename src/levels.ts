@@ -52,20 +52,21 @@ function gemColorForPosition(x: number, y: number, minX: number, width: number):
   return largeBoardColors[(tileX + tileY * 2) % largeBoardColors.length]
 }
 
-const houseRows: RowSpans[] = [
-  [[11, 14]],
-  [[9, 16]],
-  [[7, 18]],
-  [[5, 20]],
-  [[3, 22]],
-  [[2, 23]],
-  [[2, 23]],
-  [[2, 23]],
-  [[2, 23]],
-  [[2, 23]],
-  [[2, 23]],
-  [[2, 23]],
-  [[4, 21]],
+const bathingDogRows: RowSpans[] = [
+  [[8, 10]],
+  [[3, 7], [8, 12]],
+  [[1, 12]],
+  [[2, 13]],
+  [[3, 14]],
+  [[3, 13], [19, 23]],
+  [[4, 14], [18, 24]],
+  [[4, 15], [18, 24]],
+  [[3, 16], [18, 24]],
+  [[2, 17], [19, 24]],
+  [[2, 18], [20, 24]],
+  [[1, 21]],
+  [[2, 20]],
+  [[4, 18]],
 ]
 
 const cupRows: RowSpans[] = [
@@ -165,7 +166,7 @@ export const levels: Level[] = [
     [5, 4, 'red', 'blue'],
     [5, 5, 'red', 'red'],
   ]),
-  makeShapedLevel(2, '第2关 小屋', houseRows),
+  makeShapedLevel(2, '第2关 洗澡小狗', bathingDogRows),
   makeShapedLevel(3, '第3关 茶杯', cupRows),
   makeShapedLevel(4, '第4关 台灯', lampRows),
   makeShapedLevel(5, '第5关 礼物相框', giftRows),
