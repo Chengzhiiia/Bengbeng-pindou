@@ -148,14 +148,14 @@ export function isLevelSolved(cells: Cell[], tray: TraySlot[]): boolean {
 }
 
 export function colorLabel(color: GemColor): string {
-  const labels: Record<GemColor, string> = {
+  const labels: Record<string, string> = {
     red: '红色',
     blue: '蓝色',
     yellow: '黄色',
     green: '绿色',
     purple: '紫色',
   }
-  return labels[color]
+  return labels[color] ?? color
 }
 
 function getPlacementCellIds(cells: Cell[], startCellId: string, color: GemColor): string[] {

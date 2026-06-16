@@ -150,6 +150,10 @@
   background: linear-gradient(145deg, #c29bff, #7b58ce);
 }
 
+.target-custom {
+  background: linear-gradient(145deg, var(--target-color), var(--target-shadow));
+}
+
 .cell.selected {
   z-index: 2;
   outline: 4px solid rgb(255 246 150 / 82%);
@@ -223,6 +227,10 @@
 
 .gem-purple {
   background: linear-gradient(145deg, #ce9dff, #7051c7);
+}
+
+.gem-custom {
+  background: linear-gradient(145deg, var(--gem-color), var(--gem-shadow));
 }
 
 .flight-layer {

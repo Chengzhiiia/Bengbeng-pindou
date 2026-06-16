@@ -22,9 +22,13 @@ const makeLevel = (
 
 const largeBoardColors: GemColor[] = ['red', 'blue', 'yellow', 'green', 'purple']
 type RowSpans = Array<[number, number]>
+type PixelColorMap = Record<string, GemColor>
 
 const makeShapedLevel = (id: number, title: string, rows: RowSpans[]): Level =>
   makeLevel(id, title, 300, makeShapedLevelSpecs(rows))
+
+const makePixelArtLevel = (id: number, title: string, rows: string[], colors: PixelColorMap): Level =>
+  makeLevel(id, title, 300, makePixelArtLevelSpecs(rows, colors))
 
 function makeShapedLevelSpecs(rows: RowSpans[]): Array<[number, number, GemColor, GemColor]> {
   const positions = rows.flatMap((spans, y) =>
@@ -46,27 +50,75 @@ function makeBalancedTargetColors(gemColors: GemColor[]): GemColor[] {
   return gemColors.map((_, index) => gemColors[(index + offset) % gemColors.length])
 }
 
+function makePixelArtLevelSpecs(rows: string[], colors: PixelColorMap): Array<[number, number, GemColor, GemColor]> {
+  const pixels = rows.flatMap((row, y) =>
+    [...row].flatMap((token, x) => (token === '.' ? [] : [{ x, y, color: colors[token] }])),
+  )
+  const gemColors = pixels.map(({ color }) => color)
+  const targetColors = makeBalancedTargetColors(gemColors)
+
+  return pixels.map(({ x, y, color }, index) => [x, y, targetColors[index], color])
+}
+
 function gemColorForPosition(x: number, y: number, minX: number, width: number): GemColor {
   const tileX = Math.floor(((x - minX) / width) * largeBoardColors.length)
   const tileY = Math.floor(y / 4)
   return largeBoardColors[(tileX + tileY * 2) % largeBoardColors.length]
 }
 
-const bathingDogRows: RowSpans[] = [
-  [[8, 10]],
-  [[3, 7], [8, 12]],
-  [[1, 12]],
-  [[2, 13]],
-  [[3, 14]],
-  [[3, 13], [19, 23]],
-  [[4, 14], [18, 24]],
-  [[4, 15], [18, 24]],
-  [[3, 16], [18, 24]],
-  [[2, 17], [19, 24]],
-  [[2, 18], [20, 24]],
-  [[1, 21]],
-  [[2, 20]],
-  [[4, 18]],
+const bathingDogPixelColors: PixelColorMap = {
+  K: '#111111',
+  F: '#f2d49c',
+  S: '#d99523',
+  B: '#75baff',
+  D: '#4c9df5',
+  L: '#b9dcff',
+  W: '#f7fbff',
+  Y: '#ffd35d',
+  O: '#c77a08',
+  R: '#ff2d2d',
+}
+
+const bathingDogPixelRows = [
+  '................KKK..........................',
+  '...............KFFFK.........................',
+  '...............KFFFFK........................',
+  '.............LLBFFFFK........................',
+  '....KKFK....LLFFLFFFK........................',
+  '...KFFFFFKKBL...FLFFF........................',
+  '..KFFFFFFFFBF...FFB.FB.......................',
+  '..KFFFFFFFFFFFFFFFFFFB.......................',
+  '...KFFFFFFFFFFFFFFFFFKK......................',
+  '....KKKFFFFFFFFFFFFFFFFK.....................',
+  '........KFFFFFFFFFFFFFFFK....................',
+  '.......KFFFFFFFFFFFFFFFFK....................',
+  '.......KFFFKFFKFFKFFFFFFF....................',
+  '......KFFFFKFFFFFKKKFFFFF....................',
+  '......KFFFFKFFFKKFFFFFFFK....................',
+  '......KFFFKFFFFFFFFFFFKKK....................',
+  '......KFFFKFFFFFFFFFFKFFF....................',
+  '......KFFFFLF.FFKKKFFKFFF....................',
+  '......KFFFL..LKKSOOOKKFFF....................',
+  '......KFFFF.FK.KOOOOKKFFF....................',
+  '......KFFFFFFKWKOOSKFFFKK....................',
+  '......KFFFFLFFKKKKFFFFFFK....................',
+  '......KFFFFFFFFFFFFFFFFFFK.......KKKKKK......',
+  '.......KFFFFFFFFFFKFFFFFFBBB..KKKOSOOOOKK....',
+  '.....BBKKFFFFFFFFFFKFFFFKBBBBBKOSSSSSSSSOK...',
+  '...BBBBKOKKFFFFFFFKKKKKKBBBBBKOSBBBBLLLBOK...',
+  '..BBBBBKKFOKKKKKKKKOFSFKBBBBBKKKBBBBBBBBKK...',
+  '.BBBBBBBKKKSFOFFOOSKKKBBBBBBBKFKKKKKKKKKYKB..',
+  'BBBBBBBKFFOKKKKKKKKKKSKBBBBBBKYYYYYYYYYYYKBB.',
+  'BBBBBBBKKKFFFFOKBBKKKKKBBBBBBKRRYYYYYYYYRKBBB',
+  'BBBBBBBBBBKKOOKBBBBBKKBBBBBBBKYYRRRRRRRRYKBBB',
+  'BBBBBBBBBBBBKKKBBBBBBBBBBBBBBBYYYFYFYYFYYKBBB',
+  '.BBBBBBBBBBBBBBBBBBBBBBBBBBBBBKKKFYFKKYKKBBBB',
+  '.LBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+  '...BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.',
+  '.....BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB..',
+  '......BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.....',
+  '........LBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.......',
+  '............BBBBBBBBBBBBBBBBBBBBBBB..........',
 ]
 
 const cupRows: RowSpans[] = [
@@ -166,7 +218,7 @@ export const levels: Level[] = [
     [5, 4, 'red', 'blue'],
     [5, 5, 'red', 'red'],
   ]),
-  makeShapedLevel(2, '第2关 洗澡小狗', bathingDogRows),
+  makePixelArtLevel(2, '第2关 洗澡小狗', bathingDogPixelRows, bathingDogPixelColors),
   makeShapedLevel(3, '第3关 茶杯', cupRows),
   makeShapedLevel(4, '第4关 台灯', lampRows),
   makeShapedLevel(5, '第5关 礼物相框', giftRows),

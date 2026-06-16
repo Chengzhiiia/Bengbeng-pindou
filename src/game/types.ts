@@ -1,4 +1,6 @@
-export type GemColor = 'red' | 'blue' | 'yellow' | 'green' | 'purple'
+export type PresetGemColor = 'red' | 'blue' | 'yellow' | 'green' | 'purple'
+export type HexGemColor = `#${string}`
+export type GemColor = PresetGemColor | HexGemColor
 
 export type Cell = {
   id: string
@@ -23,4 +25,3 @@ export type TraySlot = {
 export type Selection =
   | { source: 'board'; color: GemColor; cellIds: string[] }
   | { source: 'tray'; color: GemColor }
-
