@@ -35,10 +35,7 @@ function makeShapedLevelSpecs(rows: RowSpans[]): Array<[number, number, GemColor
   const minX = Math.min(...positions.map(({ x }) => x))
   const maxX = Math.max(...positions.map(({ x }) => x))
   const width = maxX - minX + 1
-  const gemColors = positions.map(({ x }) => {
-    const colorIndex = Math.min(largeBoardColors.length - 1, Math.floor(((x - minX) / width) * largeBoardColors.length))
-    return largeBoardColors[colorIndex]
-  })
+  const gemColors = positions.map(({ x, y }) => gemColorForPosition(x, y, minX, width))
   const targetColors = makeBalancedTargetColors(gemColors)
 
   return positions.map(({ x, y }, index) => [x, y, targetColors[index], gemColors[index]])
@@ -47,6 +44,12 @@ function makeShapedLevelSpecs(rows: RowSpans[]): Array<[number, number, GemColor
 function makeBalancedTargetColors(gemColors: GemColor[]): GemColor[] {
   const offset = Math.ceil(gemColors.length / 2)
   return gemColors.map((_, index) => gemColors[(index + offset) % gemColors.length])
+}
+
+function gemColorForPosition(x: number, y: number, minX: number, width: number): GemColor {
+  const tileX = Math.floor(((x - minX) / width) * largeBoardColors.length)
+  const tileY = Math.floor(y / 4)
+  return largeBoardColors[(tileX + tileY * 2) % largeBoardColors.length]
 }
 
 const houseRows: RowSpans[] = [

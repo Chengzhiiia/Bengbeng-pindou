@@ -75,6 +75,40 @@ const connectedMismatchedGemBlocks = (level: Level): number[] => {
   return sizes.sort((a, b) => b - a)
 }
 
+const connectedGemBlocksByColor = (level: Level): Partial<Record<GemColor, number[]>> => {
+  const byPosition = new Map(level.cells.map((cell) => [`${cell.x},${cell.y}`, cell]))
+  const visited = new Set<string>()
+  const sizesByColor: Partial<Record<GemColor, number[]>> = {}
+
+  for (const cell of level.cells) {
+    if (!cell.gemColor || visited.has(cell.id)) continue
+
+    const stack = [cell]
+    visited.add(cell.id)
+    let size = 0
+
+    while (stack.length > 0) {
+      const current = stack.pop()
+      if (!current?.gemColor) continue
+      size += 1
+
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const next = byPosition.get(`${current.x + dx},${current.y + dy}`)
+        if (next?.gemColor === cell.gemColor && !visited.has(next.id)) {
+          visited.add(next.id)
+          stack.push(next)
+        }
+      }
+    }
+
+    sizesByColor[cell.gemColor] = [...(sizesByColor[cell.gemColor] ?? []), size]
+  }
+
+  return Object.fromEntries(
+    Object.entries(sizesByColor).map(([color, sizes]) => [color, sizes.sort((a, b) => b - a)]),
+  ) as Partial<Record<GemColor, number[]>>
+}
+
 const boundingArea = (level: Level) => {
   const xs = level.cells.map(({ x }) => x)
   const ys = level.cells.map(({ y }) => y)
@@ -139,10 +173,22 @@ describe('levels', () => {
     for (const level of levels.slice(1)) {
       const blockSizes = connectedMismatchedGemBlocks(level)
 
-      expect(blockSizes.filter((size) => size >= 18).length).toBeGreaterThanOrEqual(2)
-      expect(blockSizes.filter((size) => size >= 18).length).toBeLessThanOrEqual(7)
-      expect(blockSizes.filter((size) => size >= 10).length).toBeGreaterThanOrEqual(4)
-      expect(blockSizes.filter((size) => size >= 10).length).toBeLessThanOrEqual(8)
+      expect(blockSizes.filter((size) => size >= 12).length).toBeGreaterThanOrEqual(3)
+      expect(blockSizes.filter((size) => size >= 10).length).toBeGreaterThanOrEqual(6)
+      expect(blockSizes.filter((size) => size >= 10).length).toBeLessThanOrEqual(16)
+    }
+  })
+
+  it('splits each visible gem color into multiple separated blocks on large levels', () => {
+    for (const level of levels.slice(1)) {
+      const colorBlocks = connectedGemBlocksByColor(level)
+
+      for (const color of Object.keys(countColors(level)) as GemColor[]) {
+        const blocks = colorBlocks[color] ?? []
+
+        expect(blocks.length).toBeGreaterThanOrEqual(2)
+        expect(blocks[0]).toBeLessThanOrEqual(30)
+      }
     }
   })
 })
