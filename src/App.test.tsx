@@ -162,14 +162,14 @@ describe('App', () => {
 
     expect(selectedCell).toHaveClass('selected')
     expect(appCss).not.toMatch(/\.cell\.selected\s*\{[^}]*outline/)
-    expect(appCss).toMatch(/\.cell\.selected::before\s*\{[^}]*opacity:\s*0/)
+    expect(appCss).not.toMatch(/\.cell\.selected::before/)
   })
 
-  it('does not draw white backing frames around board edge cells', () => {
+  it('does not draw backing frames around board edge cells', () => {
     const appCss = readFileSync('src/App.css', 'utf-8')
 
-    expect(appCss).toMatch(/\.cell::before\s*\{[^}]*background:\s*transparent/)
-    expect(appCss).not.toMatch(/\.cell::before\s*\{[^}]*background:\s*#f5fbff/)
+    expect(appCss).not.toMatch(/\.cell::before/)
+    expect(appCss).not.toMatch(/\.cell\.selected::before/)
   })
 
   it('keeps board cells and gems square on all levels', () => {

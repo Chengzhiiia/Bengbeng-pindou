@@ -204,16 +204,6 @@
     inset 0 -7px 11px rgb(0 0 0 / 17%);
 }
 
-.cell::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  z-index: -1;
-  border-radius: calc(var(--board-cell-size) * 0.24);
-  background: transparent;
-  box-shadow: 0 0 0 2px #9aa6b7;
-}
-
 .target-red {
   background: linear-gradient(145deg, #ff6759, #d9362e);
 }
@@ -240,10 +230,6 @@
 
 .cell.selected {
   z-index: 2;
-}
-
-.cell.selected::before {
-  opacity: 0;
 }
 
 .cell-button {
