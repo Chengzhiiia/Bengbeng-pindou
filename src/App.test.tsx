@@ -165,6 +165,16 @@ describe('App', () => {
     expect(appCss).toMatch(/\.cell\.selected::before\s*\{[^}]*opacity:\s*0/)
   })
 
+  it('keeps board cells and gems square on all levels', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).not.toMatch(/\.cell\s*\{[^}]*border-radius:\s*\d+px/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*border-radius:\s*\d+px/)
+  })
+
   it('clears a board gem selection when clicking outside the board', () => {
     render(<App />)
 
