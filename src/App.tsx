@@ -386,7 +386,7 @@ function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, scale, on
             aria-label={`${level.title} ${cell.gemColor ? `${colorLabel(cell.gemColor)}宝石` : `${colorLabel(cell.targetColor)}空格`} ${cell.x},${cell.y}`}
             onClick={() => onCellClick(cell)}
           >
-            {cell.gemColor && !hiddenGemIds.has(cell.id) && <Gem color={cell.gemColor} />}
+            {cell.gemColor && !hiddenGemIds.has(cell.id) && <Gem color={cell.gemColor} selected={selectedCellIds.has(cell.id)} />}
           </button>
         </div>
       ))}
@@ -442,7 +442,7 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
             aria-label={`暂存槽 ${index + 1} ${slot.gemColor ? `${colorLabel(slot.gemColor)}宝石` : '空'}`}
             onClick={() => onTrayClick(slot)}
           >
-            {slot.gemColor && !hiddenSlotIds.has(slot.id) && <Gem color={slot.gemColor} small />}
+            {slot.gemColor && !hiddenSlotIds.has(slot.id) && <Gem color={slot.gemColor} small selected={selectedColor === slot.gemColor} />}
           </button>
         ))}
       </div>
@@ -458,8 +458,8 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
   )
 }
 
-function Gem({ color, small = false }: { color: GemColor; small?: boolean }) {
-  return <span className={`gem ${gemClassFor(color)} ${small ? 'gem-small' : ''}`} style={gemColorStyle(color)} />
+function Gem({ color, small = false, selected = false }: { color: GemColor; small?: boolean; selected?: boolean }) {
+  return <span className={`gem ${gemClassFor(color)} ${small ? 'gem-small' : ''} ${selected ? 'gem-selected' : ''}`} style={gemColorStyle(color)} />
 }
 
 type SettingsPanelProps = {

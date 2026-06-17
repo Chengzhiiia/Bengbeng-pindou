@@ -135,6 +135,18 @@ describe('App', () => {
     expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
   })
 
+  it('marks selected board gems for lift and flashing animation', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(getBoardButtonAt('1,0').querySelector('.gem')).toHaveClass('gem-selected')
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(getBoardButtonAt('1,0').querySelector('.gem')).not.toHaveClass('gem-selected')
+  })
+
   it('clears a board gem selection when clicking outside the board', () => {
     render(<App />)
 
