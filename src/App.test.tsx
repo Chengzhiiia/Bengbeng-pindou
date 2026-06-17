@@ -21,6 +21,12 @@ const getTrayButton = (slotNumber: number) => {
   return button
 }
 
+const expectBoardButtonSelected = (coordinate: string, selected: boolean) => {
+  const cell = getBoardButtonAt(coordinate).closest('.cell')
+
+  expect(cell?.classList.contains('selected')).toBe(selected)
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -73,6 +79,38 @@ describe('App', () => {
     finishAnimation()
 
     expect(document.querySelectorAll('.cell.selected').length).toBeGreaterThan(0)
+  })
+
+  it('clears a board gem selection when clicking a selected gem again', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    expectBoardButtonSelected('1,0', true)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
+  })
+
+  it('clears a board gem selection when clicking outside the board', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    expectBoardButtonSelected('1,0', true)
+
+    fireEvent.click(screen.getByRole('status'))
+
+    expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
+  })
+
+  it('switches selection when clicking an unselected board gem', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getBoardButtonAt('7,0'))
+
+    expectBoardButtonSelected('1,0', false)
+    expectBoardButtonSelected('7,0', true)
   })
 
   it('moves selected board gems directly into matching empty board cells', async () => {

@@ -144,6 +144,12 @@ function App() {
   const handleCellClick = (cell: Cell) => {
     if (status !== 'playing' || isAnimating) return
 
+    if (selection?.source === 'board' && selection.cellIds.includes(cell.id)) {
+      setSelection(null)
+      setToast('已取消选择')
+      return
+    }
+
     if (selection?.source === 'tray') {
       const result = moveTraySelectionToBoard(cells, tray, cell.id, selection.color)
       if (result.placedCellIds.length === 0) {
@@ -228,11 +234,17 @@ function App() {
 
     if (slot.gemColor) {
       setSelection({ source: 'tray', color: slot.gemColor })
-      setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
+    setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
       return
     }
 
     setToast(selection ? '点击空暂存槽可移动棋盘选中宝石' : '先选择棋盘宝石或暂存区宝石')
+  }
+
+  const clearBoardSelection = () => {
+    if (selection?.source !== 'board' || isAnimating) return
+    setSelection(null)
+    setToast('已取消选择')
   }
 
   return (
@@ -253,7 +265,7 @@ function App() {
         </button>
       </header>
 
-      <section className="play-area" aria-label="游戏区域">
+      <section className="play-area" aria-label="游戏区域" onClick={clearBoardSelection}>
         <Board
           level={level}
           cells={cells}
@@ -335,7 +347,7 @@ type BoardProps = {
 
 function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellClick, registerCellRef }: BoardProps) {
   return (
-    <div className="board-viewport">
+    <div className="board-viewport" onClick={(event) => event.stopPropagation()}>
       <div
         className="board"
         role="grid"
