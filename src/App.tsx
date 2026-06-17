@@ -17,9 +17,9 @@ const traySize = 12
 const flightDurationMs = 260
 const flightStaggerMs = 20
 const gemVisualSizeRatio = 0.72
-const minBoardScale = 0.72
-const maxBoardScale = 1.1
-const minZoomVisibleCells = 9
+const minBoardScale = 0.92
+const maxBoardScale = 1.22
+const minZoomVisibleCells = 12
 
 const presetColorClass: Record<string, string> = {
   red: 'gem-red',

@@ -85,7 +85,7 @@
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 26px;
+  gap: 12px;
   padding-bottom: 8px;
 }
 
@@ -172,7 +172,7 @@
   --board-scale: 0.72;
   --board-cell-size: calc(var(--cell-size) * var(--board-scale));
   width: min(100%, 488px);
-  max-height: min(52vh, 430px);
+  max-height: min(66vh, 520px);
   overflow: auto;
   padding: 8px;
   border-radius: 16px;
@@ -367,10 +367,10 @@
 }
 
 .prompt {
+  display: none;
   width: min(86%, 356px);
   min-height: 70px;
   border-radius: 18px;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 12px 20px;

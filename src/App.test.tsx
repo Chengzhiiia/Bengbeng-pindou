@@ -28,6 +28,12 @@ const getBoardViewport = () => {
   return viewport
 }
 
+const getPlayArea = () => {
+  const playArea = document.querySelector<HTMLElement>('.play-area')
+  if (!playArea) throw new Error('Play area not found')
+  return playArea
+}
+
 const getZoomSlider = () => screen.getByRole('slider', { name: '棋盘缩放' }) as HTMLInputElement
 
 const getBoardScale = () => Number(getBoardViewport().style.getPropertyValue('--board-scale'))
@@ -70,7 +76,7 @@ describe('App', () => {
 
     expect(getZoomSlider()).toHaveValue('0')
     expect(getZoomSlider()).toHaveAttribute('aria-valuenow', '0')
-    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.72')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.92')
   })
 
   it('enlarges the board when dragging the zoom handle up and shrinks it when dragging down', () => {
@@ -79,12 +85,12 @@ describe('App', () => {
     fireEvent.change(getZoomSlider(), { target: { value: '100' } })
 
     expect(getZoomSlider()).toHaveValue('100')
-    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('1.1')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('1.22')
 
     fireEvent.change(getZoomSlider(), { target: { value: '25' } })
 
     expect(getZoomSlider()).toHaveValue('25')
-    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.82')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('1')
   })
 
   it('resets board zoom to a full-board minimum when switching levels', () => {
@@ -95,7 +101,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(getZoomSlider()).toHaveValue('0')
-    expect(getBoardScale()).toBeLessThan(0.72)
+    expect(getBoardScale()).toBeLessThan(0.92)
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {
@@ -193,6 +199,15 @@ describe('App', () => {
     expect(appCss).not.toMatch(/\.target-custom\s*\{[^}]*linear-gradient/)
   })
 
+  it('hides the guidance prompt and gives more space to the board', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.prompt\s*\{[^}]*display:\s*none/)
+    expect(appCss).not.toMatch(/\.prompt\s*\{[^}]*display:\s*flex/)
+    expect(appCss).toMatch(/\.board-viewport\s*\{[^}]*max-height:\s*min\(66vh,\s*520px\)/)
+    expect(appCss).toMatch(/\.play-area\s*\{[^}]*gap:\s*12px/)
+  })
+
   it('keeps board gems smaller than target cells so the target color remains visible', () => {
     const appCss = readFileSync('src/App.css', 'utf-8')
 
@@ -208,7 +223,7 @@ describe('App', () => {
     fireEvent.click(getBoardButtonAt('1,0'))
     expectBoardButtonSelected('1,0', true)
 
-    fireEvent.click(screen.getByRole('status'))
+    fireEvent.click(getPlayArea())
 
     expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
   })
@@ -304,7 +319,7 @@ describe('App', () => {
     fireEvent.click(getTrayButton(1))
     expectTrayButtonSelected(1, true)
 
-    fireEvent.click(screen.getByRole('status'))
+    fireEvent.click(getPlayArea())
 
     expectTrayButtonSelected(1, false)
   })
