@@ -182,6 +182,17 @@ describe('App', () => {
     expect(appCss).not.toMatch(/\.gem\s*\{[^}]*border-radius:\s*\d+px/)
   })
 
+  it('renders adjacent same-color target cells as continuous color regions', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*border-radius:\s*0/)
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*box-shadow:\s*none/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*border:\s*0/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*border-radius:\s*0/)
+    expect(appCss).not.toMatch(/\.target-[\w-]+\s*\{[^}]*linear-gradient/)
+    expect(appCss).not.toMatch(/\.target-custom\s*\{[^}]*linear-gradient/)
+  })
+
   it('clears a board gem selection when clicking outside the board', () => {
     render(<App />)
 
