@@ -105,14 +105,14 @@ function gemColorForPosition(x: number, y: number, minX: number, width: number):
 
 const bathingDogPixelColors: PixelColorMap = {
   K: '#111111',
-  F: '#f2d49c',
-  S: '#d99523',
-  B: '#75baff',
-  D: '#4c9df5',
-  L: '#b9dcff',
+  F: '#ffe0a6',
+  S: '#bd6f10',
+  B: '#8fd0ff',
+  D: '#237ce8',
+  L: '#d8eeff',
   W: '#f7fbff',
-  Y: '#ffd35d',
-  O: '#c77a08',
+  Y: '#ffe06a',
+  O: '#8f4c00',
   R: '#ff2d2d',
 }
 
@@ -160,11 +160,11 @@ const bathingDogPixelRows = [
 
 const lateNightDogPixelColors: PixelColorMap = {
   K: '#111111',
-  Y: '#e4cd55',
-  C: '#fff8ec',
-  F: '#e0c980',
-  O: '#ae713d',
-  M: '#d09b52',
+  Y: '#f0d83f',
+  C: '#fffdf5',
+  F: '#caa34f',
+  O: '#8d4f24',
+  M: '#c47a2b',
 }
 
 const lateNightDogPixelRows = [
