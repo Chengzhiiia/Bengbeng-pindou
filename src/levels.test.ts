@@ -143,8 +143,9 @@ describe('levels', () => {
     const largeLevelSizes = levels.slice(1).map((level) => level.cells.length)
 
     expect(largeLevelSizes[0]).toBeGreaterThan(900)
-    expect(largeLevelSizes.slice(1).every((size) => size >= 200 && size <= 260)).toBe(true)
-    expect(Math.max(...largeLevelSizes.slice(1)) - Math.min(...largeLevelSizes.slice(1))).toBeLessThanOrEqual(50)
+    expect(largeLevelSizes[1]).toBeGreaterThan(900)
+    expect(largeLevelSizes.slice(2).every((size) => size >= 200 && size <= 260)).toBe(true)
+    expect(Math.max(...largeLevelSizes.slice(2)) - Math.min(...largeLevelSizes.slice(2))).toBeLessThanOrEqual(50)
   })
 
   it('uses a different non-rectangular silhouette for each large level pattern', () => {
@@ -161,7 +162,7 @@ describe('levels', () => {
     expect(levels.map((level) => level.title)).toEqual([
       '第1关',
       '第2关 洗澡小狗',
-      '第3关 茶杯',
+      '第3关 小狗熬夜',
       '第4关 台灯',
       '第5关 礼物相框',
       '第6关 温馨客厅',
@@ -184,17 +185,32 @@ describe('levels', () => {
     expect(hasCell(secondLevel, 44, 0)).toBe(false)
   })
 
+  it('uses the cropped pixel-art late-night dog reference for the third level', () => {
+    const thirdLevel = levels[2]
+
+    expect(thirdLevel.title).toBe('第3关 小狗熬夜')
+    expect(thirdLevel.cells).toHaveLength(1068)
+    expect(cellAt(thirdLevel, 13, 0)?.gemColor).toBe('#e4cd55')
+    expect(cellAt(thirdLevel, 27, 12)?.gemColor).toBe('#111111')
+    expect(cellAt(thirdLevel, 21, 23)?.gemColor).toBe('#fff8ec')
+    expect(cellAt(thirdLevel, 34, 16)?.gemColor).toBe('#ae713d')
+    expect(cellAt(thirdLevel, 24, 12)?.gemColor).toBe('#d09b52')
+    expect(hasCell(thirdLevel, 0, 0)).toBe(false)
+    expect(hasCell(thirdLevel, 43, 43)).toBe(false)
+  })
+
   it('adds color variety from the second level onward', () => {
     const colorCounts = levels.map((level) => Object.keys(countColors(level)).length)
 
     expect(colorCounts[0]).toBeLessThan(colorCounts[1])
     expect(colorCounts[1]).toBeGreaterThan(5)
-    expect(colorCounts.slice(2, 4).every((count) => count >= 4)).toBe(true)
+    expect(colorCounts[2]).toBeGreaterThan(5)
+    expect(colorCounts[3]).toBeGreaterThanOrEqual(4)
     expect(colorCounts.slice(4).every((count) => count === 5)).toBe(true)
   })
 
   it('clusters large same-color mismatched gem blocks for satisfying batch moves', () => {
-    for (const level of levels.slice(2)) {
+    for (const level of levels.slice(3)) {
       const blockSizes = connectedMismatchedGemBlocks(level)
 
       expect(blockSizes.filter((size) => size >= 12).length).toBeGreaterThanOrEqual(3)
@@ -204,7 +220,7 @@ describe('levels', () => {
   })
 
   it('splits each visible gem color into multiple separated blocks on large levels', () => {
-    for (const level of levels.slice(2)) {
+    for (const level of levels.slice(3)) {
       const colorBlocks = connectedGemBlocksByColor(level)
 
       for (const color of Object.keys(countColors(level)) as GemColor[]) {

@@ -21,6 +21,20 @@ const getTrayButton = (slotNumber: number) => {
   return button
 }
 
+const getBoardViewport = () => {
+  const viewport = document.querySelector<HTMLElement>('.board-viewport')
+  if (!viewport) throw new Error('Board viewport not found')
+  return viewport
+}
+
+const getZoomSlider = () => screen.getByRole('slider', { name: '棋盘缩放' }) as HTMLInputElement
+
+const expectBoardButtonSelected = (coordinate: string, selected: boolean) => {
+  const cell = getBoardButtonAt(coordinate).closest('.cell')
+
+  expect(cell?.classList.contains('selected')).toBe(selected)
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -42,6 +56,39 @@ describe('App', () => {
 
     expect(viewport).toBeInTheDocument()
     expect(document.querySelectorAll('.tray-slot')).toHaveLength(12)
+  })
+
+  it('starts each level with the zoom handle at the bottom and the board minimized', () => {
+    render(<App />)
+
+    expect(getZoomSlider()).toHaveValue('0')
+    expect(getZoomSlider()).toHaveAttribute('aria-valuenow', '0')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.72')
+  })
+
+  it('enlarges the board when dragging the zoom handle up and shrinks it when dragging down', () => {
+    render(<App />)
+
+    fireEvent.change(getZoomSlider(), { target: { value: '100' } })
+
+    expect(getZoomSlider()).toHaveValue('100')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('1.1')
+
+    fireEvent.change(getZoomSlider(), { target: { value: '25' } })
+
+    expect(getZoomSlider()).toHaveValue('25')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.82')
+  })
+
+  it('resets board zoom to the minimum when switching levels', () => {
+    render(<App />)
+
+    fireEvent.change(getZoomSlider(), { target: { value: '100' } })
+    fireEvent.click(screen.getByRole('button', { name: '设置' }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
+
+    expect(getZoomSlider()).toHaveValue('0')
+    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.72')
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {
@@ -73,6 +120,38 @@ describe('App', () => {
     finishAnimation()
 
     expect(document.querySelectorAll('.cell.selected').length).toBeGreaterThan(0)
+  })
+
+  it('clears a board gem selection when clicking a selected gem again', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    expectBoardButtonSelected('1,0', true)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
+  })
+
+  it('clears a board gem selection when clicking outside the board', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    expectBoardButtonSelected('1,0', true)
+
+    fireEvent.click(screen.getByRole('status'))
+
+    expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
+  })
+
+  it('switches selection when clicking an unselected board gem', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getBoardButtonAt('7,0'))
+
+    expectBoardButtonSelected('1,0', false)
+    expectBoardButtonSelected('7,0', true)
   })
 
   it('moves selected board gems directly into matching empty board cells', async () => {
