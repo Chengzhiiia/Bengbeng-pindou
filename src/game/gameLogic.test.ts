@@ -19,7 +19,7 @@ const cell = (
 ): Cell => ({ id, x, y, targetColor, gemColor })
 
 describe('game logic', () => {
-  it('selects only an orthogonally connected same-color mismatched board group', () => {
+  it('selects the eight-direction connected same-color mismatched board group', () => {
     const cells = [
       cell('a', 0, 0, 'red', 'blue'),
       cell('b', 1, 0, 'red', 'blue'),
@@ -29,7 +29,18 @@ describe('game logic', () => {
       cell('f', 2, 1, 'red', 'blue'),
     ]
 
-    expect(findConnectedGemGroup(cells, 'a')).toEqual(['a', 'b', 'd'])
+    expect(findConnectedGemGroup(cells, 'a')).toEqual(['a', 'b', 'd', 'f'])
+  })
+
+  it('treats diagonal same-color mismatched gems as connected', () => {
+    const cells = [
+      cell('a', 0, 0, 'red', 'blue'),
+      cell('b', 1, 1, 'red', 'blue'),
+      cell('c', 2, 2, 'red', 'blue'),
+      cell('d', 2, 0, 'red', 'red'),
+    ]
+
+    expect(findConnectedGemGroup(cells, 'a')).toEqual(['a', 'b', 'c'])
   })
 
   it('keeps the clicked gem first and then nearby gems in the selected group order', () => {
@@ -102,6 +113,23 @@ describe('game logic', () => {
     expect(result.cells.find(({ id }) => id === 'b1')?.gemColor).toBeUndefined()
     expect(result.tray.filter((slot) => slot.gemColor === 'red')).toHaveLength(0)
     expect(result.tray.filter((slot) => slot.gemColor === 'blue')).toHaveLength(1)
+  })
+
+  it('moves tray gems into diagonally connected matching target cells', () => {
+    const cells = [
+      cell('r1', 0, 0, 'red'),
+      cell('r2', 1, 1, 'red'),
+      cell('r3', 2, 2, 'red'),
+      cell('b1', 1, 0, 'blue'),
+    ]
+    const tray = createTray(4).map((slot, index) =>
+      index < 3 ? { ...slot, gemColor: 'red' as const } : slot,
+    )
+
+    const result = moveTraySelectionToBoard(cells, tray, 'r1', 'red')
+
+    expect(result.placedCellIds).toEqual(['r1', 'r2', 'r3'])
+    expect(result.cells.find(({ id }) => id === 'r3')?.gemColor).toBe('red')
   })
 
   it('moves selected board gems directly into matching empty target cells', () => {

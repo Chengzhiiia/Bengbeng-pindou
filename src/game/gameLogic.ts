@@ -5,6 +5,10 @@ const directions = [
   [1, 0],
   [0, 1],
   [-1, 0],
+  [-1, -1],
+  [1, -1],
+  [1, 1],
+  [-1, 1],
 ] as const
 
 const keyFor = (x: number, y: number) => `${x},${y}`
