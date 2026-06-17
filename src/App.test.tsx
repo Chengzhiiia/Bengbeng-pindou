@@ -313,6 +313,36 @@ describe('App', () => {
     expect(screen.getAllByRole('button', { name: /暂存槽 \d+ 蓝色宝石/ })).toHaveLength(12)
   })
 
+  it('extends the current failed level by five minutes without resetting progress', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+
+    act(() => {
+      vi.advanceTimersByTime(300000)
+    })
+
+    expect(screen.getByRole('dialog', { name: '时间结束' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '再给嘣5分钟' }))
+
+    expect(screen.queryByRole('dialog', { name: '时间结束' })).not.toBeInTheDocument()
+    expect(screen.getByText('05:00')).toBeInTheDocument()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+  })
+
+  it('styles the failed-level time extension button as white with a blue border', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*background:\s*#fff/)
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*border:\s*3px solid #43a9ef/)
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*color:\s*#43a9ef/)
+  })
+
   it('opens settings without restarting the current board', async () => {
     vi.useFakeTimers()
     render(<App />)

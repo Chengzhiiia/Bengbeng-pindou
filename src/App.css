@@ -592,6 +592,7 @@
 }
 
 .retry-button,
+.extend-time-button,
 .next-button {
   width: min(100%, 230px);
   min-height: 56px;
@@ -606,6 +607,13 @@
 
 .retry-button {
   background: linear-gradient(180deg, #a9ef77, #5cc850);
+}
+
+.extend-time-button {
+  background: #fff;
+  border: 3px solid #43a9ef;
+  color: #43a9ef;
+  text-shadow: none;
 }
 
 .next-button {

@@ -112,6 +112,16 @@ function App() {
     setStatus('playing')
   }
 
+  const extendFailedLevel = () => {
+    setSelection(null)
+    queuedSelectionRef.current = null
+    setFlyingGems([])
+    setIsSettingsOpen(false)
+    setTimeLeft(300)
+    setStatus('playing')
+    setToast('已延时 5 分钟，继续当前进度')
+  }
+
   const completeMove = (nextCells: Cell[], nextTray: TraySlot[], message: string, nextSelection = queuedSelectionRef.current) => {
     setCells(nextCells)
     setTray(nextTray)
@@ -337,7 +347,9 @@ function App() {
           level={level}
           cells={cells}
           completed={status === 'completed'}
+          failed={status === 'failed'}
           onRetry={() => resetLevel()}
+          onExtendTime={extendFailedLevel}
           onNext={() => {
             const progress = getCompletionProgress(levelIndex, levels.length)
             if (progress.nextLevelIndex !== null) {
@@ -526,11 +538,13 @@ type WinModalProps = {
   level: Level
   cells: Cell[]
   completed: boolean
+  failed: boolean
   onRetry: () => void
+  onExtendTime: () => void
   onNext: () => void
 }
 
-function WinModal({ won, level, cells, completed, onRetry, onNext }: WinModalProps) {
+function WinModal({ won, level, cells, completed, failed, onRetry, onExtendTime, onNext }: WinModalProps) {
   const metrics = getBoardMetrics(cells)
   const isSuccess = won || completed
 
@@ -558,9 +572,9 @@ function WinModal({ won, level, cells, completed, onRetry, onNext }: WinModalPro
             />
           ))}
         </div>
-        <div className="reward">{completed ? '所有关卡已通关' : won ? `${level.title} +2` : '再试一次'}</div>
-        <button className="retry-button" type="button" onClick={onRetry}>
-          再玩一次
+        <div className="reward">{completed ? '所有关卡已通关' : won ? `${level.title} +2` : '继续当前进度'}</div>
+        <button className={failed ? 'extend-time-button' : 'retry-button'} type="button" onClick={failed ? onExtendTime : onRetry}>
+          {failed ? '再给嘣5分钟' : '再玩一次'}
         </button>
         {won && !completed && (
           <button className="next-button" type="button" onClick={onNext}>
