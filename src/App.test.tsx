@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -29,10 +30,16 @@ const getBoardViewport = () => {
 
 const getZoomSlider = () => screen.getByRole('slider', { name: '棋盘缩放' }) as HTMLInputElement
 
+const getBoardScale = () => Number(getBoardViewport().style.getPropertyValue('--board-scale'))
+
 const expectBoardButtonSelected = (coordinate: string, selected: boolean) => {
   const cell = getBoardButtonAt(coordinate).closest('.cell')
 
   expect(cell?.classList.contains('selected')).toBe(selected)
+}
+
+const expectTrayButtonSelected = (slotNumber: number, selected: boolean) => {
+  expect(getTrayButton(slotNumber).classList.contains('selected')).toBe(selected)
 }
 
 describe('App', () => {
@@ -80,7 +87,7 @@ describe('App', () => {
     expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.82')
   })
 
-  it('resets board zoom to the minimum when switching levels', () => {
+  it('resets board zoom to a full-board minimum when switching levels', () => {
     render(<App />)
 
     fireEvent.change(getZoomSlider(), { target: { value: '100' } })
@@ -88,7 +95,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(getZoomSlider()).toHaveValue('0')
-    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.72')
+    expect(getBoardScale()).toBeLessThan(0.72)
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {
@@ -131,6 +138,41 @@ describe('App', () => {
     fireEvent.click(getBoardButtonAt('1,0'))
 
     expect(document.querySelectorAll('.cell.selected')).toHaveLength(0)
+  })
+
+  it('marks selected board gems for lift and flashing animation', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(getBoardButtonAt('1,0').querySelector('.gem')).toHaveClass('gem-selected')
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    expect(getBoardButtonAt('1,0').querySelector('.gem')).not.toHaveClass('gem-selected')
+  })
+
+  it('does not draw square frames around selected board gems', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    const selectedCell = getBoardButtonAt('1,0').closest('.cell')
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(selectedCell).toHaveClass('selected')
+    expect(appCss).not.toMatch(/\.cell\.selected\s*\{[^}]*outline/)
+    expect(appCss).toMatch(/\.cell\.selected::before\s*\{[^}]*opacity:\s*0/)
+  })
+
+  it('keeps board cells and gems square on all levels', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*aspect-ratio:\s*1/)
+    expect(appCss).not.toMatch(/\.cell\s*\{[^}]*border-radius:\s*\d+px/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*border-radius:\s*\d+px/)
   })
 
   it('clears a board gem selection when clicking outside the board', () => {
@@ -208,6 +250,52 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: '第1关 蓝色宝石 5,1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '暂存槽 1 空' })).toBeInTheDocument()
+  })
+
+  it('clears a tray gem selection when clicking the selected tray gem again', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(getTrayButton(1))
+
+    expectTrayButtonSelected(1, false)
+  })
+
+  it('clears a tray gem selection when clicking outside the board', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(screen.getByRole('status'))
+
+    expectTrayButtonSelected(1, false)
+  })
+
+  it('switches from a tray gem selection to a clicked board gem block', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(getBoardButtonAt('5,1'))
+
+    expectTrayButtonSelected(1, false)
+    expectBoardButtonSelected('5,1', true)
   })
 
   it('ignores extra clicks while gems are flying', async () => {

@@ -18,6 +18,7 @@ const flightDurationMs = 260
 const flightStaggerMs = 20
 const minBoardScale = 0.72
 const maxBoardScale = 1.1
+const minZoomVisibleCells = 9
 
 const presetColorClass: Record<string, string> = {
   red: 'gem-red',
@@ -64,7 +65,6 @@ function App() {
   const isAnimating = flyingGems.length > 0
   const hiddenBoardGemIds = new Set(flyingGems.filter((gem) => gem.source === 'board').map((gem) => gem.fromId))
   const hiddenTraySlotIds = new Set(flyingGems.filter((gem) => gem.source === 'tray').map((gem) => gem.fromId))
-  const boardScale = getBoardScale(boardZoom)
 
   useEffect(() => {
     if (status !== 'playing' || isSettingsOpen) return
@@ -91,6 +91,7 @@ function App() {
   }, [])
 
   const boardMetrics = useMemo(() => getBoardMetrics(cells), [cells])
+  const boardScale = getBoardScale(boardZoom, boardMetrics)
 
   const resetLevel = (nextIndex = levelIndex) => {
     if (animationTimerRef.current !== null) {
@@ -156,6 +157,18 @@ function App() {
     }
 
     if (selection?.source === 'tray') {
+      if (cell.gemColor) {
+        const cellIds = findConnectedGemGroup(cells, cell.id)
+        if (cellIds.length === 0) {
+          setSelection(null)
+          setToast('这颗宝石已经在正确颜色的格子中')
+          return
+        }
+        setSelection({ source: 'board', color: cell.gemColor, cellIds })
+        setToast(`已选中 ${cellIds.length} 颗${colorLabel(cell.gemColor)}宝石，可放入暂存区或同色空格`)
+        return
+      }
+
       const result = moveTraySelectionToBoard(cells, tray, cell.id, selection.color)
       if (result.placedCellIds.length === 0) {
         setToast(`只能放入${colorLabel(selection.color)}空格`)
@@ -238,16 +251,20 @@ function App() {
     }
 
     if (slot.gemColor) {
+      if (selection?.source === 'tray' && selection.color === slot.gemColor) {
+        clearSelection()
+        return
+      }
       setSelection({ source: 'tray', color: slot.gemColor })
-    setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
+      setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
       return
     }
 
     setToast(selection ? '点击空暂存槽可移动棋盘选中宝石' : '先选择棋盘宝石或暂存区宝石')
   }
 
-  const clearBoardSelection = () => {
-    if (selection?.source !== 'board' || isAnimating) return
+  const clearSelection = () => {
+    if (!selection || isAnimating) return
     setSelection(null)
     setToast('已取消选择')
   }
@@ -270,7 +287,7 @@ function App() {
         </button>
       </header>
 
-      <section className="play-area" aria-label="游戏区域" onClick={clearBoardSelection}>
+      <section className="play-area" aria-label="游戏区域" onClick={clearSelection}>
         <div className="board-stage" onClick={(event) => event.stopPropagation()}>
           <ZoomControl value={boardZoom} onChange={setBoardZoom} />
           <Board
@@ -385,7 +402,7 @@ function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, scale, on
             aria-label={`${level.title} ${cell.gemColor ? `${colorLabel(cell.gemColor)}宝石` : `${colorLabel(cell.targetColor)}空格`} ${cell.x},${cell.y}`}
             onClick={() => onCellClick(cell)}
           >
-            {cell.gemColor && !hiddenGemIds.has(cell.id) && <Gem color={cell.gemColor} />}
+            {cell.gemColor && !hiddenGemIds.has(cell.id) && <Gem color={cell.gemColor} selected={selectedCellIds.has(cell.id)} />}
           </button>
         </div>
       ))}
@@ -441,7 +458,7 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
             aria-label={`暂存槽 ${index + 1} ${slot.gemColor ? `${colorLabel(slot.gemColor)}宝石` : '空'}`}
             onClick={() => onTrayClick(slot)}
           >
-            {slot.gemColor && !hiddenSlotIds.has(slot.id) && <Gem color={slot.gemColor} small />}
+            {slot.gemColor && !hiddenSlotIds.has(slot.id) && <Gem color={slot.gemColor} small selected={selectedColor === slot.gemColor} />}
           </button>
         ))}
       </div>
@@ -457,8 +474,8 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
   )
 }
 
-function Gem({ color, small = false }: { color: GemColor; small?: boolean }) {
-  return <span className={`gem ${gemClassFor(color)} ${small ? 'gem-small' : ''}`} style={gemColorStyle(color)} />
+function Gem({ color, small = false, selected = false }: { color: GemColor; small?: boolean; selected?: boolean }) {
+  return <span className={`gem ${gemClassFor(color)} ${small ? 'gem-small' : ''} ${selected ? 'gem-selected' : ''}`} style={gemColorStyle(color)} />
 }
 
 type SettingsPanelProps = {
@@ -678,8 +695,9 @@ function formatTime(seconds: number) {
   return `${minutes.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`
 }
 
-function getBoardScale(zoom: number) {
-  const scale = minBoardScale + (maxBoardScale - minBoardScale) * (zoom / 100)
+function getBoardScale(zoom: number, metrics: ReturnType<typeof getBoardMetrics>) {
+  const fittedMinScale = Math.min(minBoardScale, minZoomVisibleCells / Math.max(metrics.columns, metrics.rows))
+  const scale = fittedMinScale + (maxBoardScale - fittedMinScale) * (zoom / 100)
   return Number((scale + Number.EPSILON).toFixed(2)).toString()
 }
 
