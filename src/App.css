@@ -210,7 +210,7 @@
   inset: -4px;
   z-index: -1;
   border-radius: calc(var(--board-cell-size) * 0.24);
-  background: #f5fbff;
+  background: transparent;
   box-shadow: 0 0 0 2px #9aa6b7;
 }
 
