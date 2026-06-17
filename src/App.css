@@ -244,8 +244,8 @@
 }
 
 .gem {
-  width: 84%;
-  height: 84%;
+  width: 72%;
+  height: 72%;
   aspect-ratio: 1;
   border-radius: 18%;
   position: relative;
@@ -276,8 +276,8 @@
 }
 
 .gem-small {
-  width: 78%;
-  height: 78%;
+  width: 70%;
+  height: 70%;
   border-radius: 9px;
 }
 

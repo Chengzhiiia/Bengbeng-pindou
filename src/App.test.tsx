@@ -193,6 +193,15 @@ describe('App', () => {
     expect(appCss).not.toMatch(/\.target-custom\s*\{[^}]*linear-gradient/)
   })
 
+  it('keeps board gems smaller than target cells so the target color remains visible', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*width:\s*72%/)
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*height:\s*72%/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*width:\s*84%/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*height:\s*84%/)
+  })
+
   it('clears a board gem selection when clicking outside the board', () => {
     render(<App />)
 

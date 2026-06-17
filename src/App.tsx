@@ -16,6 +16,7 @@ import { levels } from './levels'
 const traySize = 12
 const flightDurationMs = 260
 const flightStaggerMs = 20
+const gemVisualSizeRatio = 0.72
 const minBoardScale = 0.72
 const maxBoardScale = 1.1
 const minZoomVisibleCells = 9
@@ -621,7 +622,7 @@ function getGemRect(node: HTMLElement | null): RectSnapshot | null {
   const fallbackSize = 32
   const width = rect.width || fallbackSize
   const height = rect.height || fallbackSize
-  const size = Math.max(20, Math.min(width, height) * 0.84)
+  const size = Math.max(20, Math.min(width, height) * gemVisualSizeRatio)
   return {
     left: rect.left + (width - size) / 2,
     top: rect.top + (height - size) / 2,
