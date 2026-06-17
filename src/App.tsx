@@ -16,6 +16,8 @@ import { levels } from './levels'
 const traySize = 12
 const flightDurationMs = 260
 const flightStaggerMs = 20
+const minBoardScale = 0.72
+const maxBoardScale = 1.1
 
 const presetColorClass: Record<string, string> = {
   red: 'gem-red',
@@ -52,6 +54,7 @@ function App() {
   const [status, setStatus] = useState<'playing' | 'won' | 'completed' | 'failed'>('playing')
   const [flyingGems, setFlyingGems] = useState<FlyingGem[]>([])
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [boardZoom, setBoardZoom] = useState(0)
   const boardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const trayRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const animationTimerRef = useRef<number | null>(null)
@@ -61,6 +64,7 @@ function App() {
   const isAnimating = flyingGems.length > 0
   const hiddenBoardGemIds = new Set(flyingGems.filter((gem) => gem.source === 'board').map((gem) => gem.fromId))
   const hiddenTraySlotIds = new Set(flyingGems.filter((gem) => gem.source === 'tray').map((gem) => gem.fromId))
+  const boardScale = getBoardScale(boardZoom)
 
   useEffect(() => {
     if (status !== 'playing' || isSettingsOpen) return
@@ -101,6 +105,7 @@ function App() {
     queuedSelectionRef.current = null
     setFlyingGems([])
     setIsSettingsOpen(false)
+    setBoardZoom(0)
     setToast('点击棋盘上的宝石，选中同色连通块')
     setTimeLeft(nextLevel.timeLimitSeconds)
     setStatus('playing')
@@ -266,17 +271,21 @@ function App() {
       </header>
 
       <section className="play-area" aria-label="游戏区域" onClick={clearBoardSelection}>
-        <Board
-          level={level}
-          cells={cells}
-          metrics={boardMetrics}
-          selectedCellIds={selectedCellIds}
-          hiddenGemIds={hiddenBoardGemIds}
-          onCellClick={handleCellClick}
-          registerCellRef={(id, node) => {
-            boardRefs.current[id] = node
-          }}
-        />
+        <div className="board-stage" onClick={(event) => event.stopPropagation()}>
+          <ZoomControl value={boardZoom} onChange={setBoardZoom} />
+          <Board
+            level={level}
+            cells={cells}
+            metrics={boardMetrics}
+            selectedCellIds={selectedCellIds}
+            hiddenGemIds={hiddenBoardGemIds}
+            scale={boardScale}
+            onCellClick={handleCellClick}
+            registerCellRef={(id, node) => {
+              boardRefs.current[id] = node
+            }}
+          />
+        </div>
         <div className="prompt" role="status">
           {toast}
         </div>
@@ -341,20 +350,21 @@ type BoardProps = {
   metrics: ReturnType<typeof getBoardMetrics>
   selectedCellIds: Set<string>
   hiddenGemIds: Set<string>
+  scale: string
   onCellClick: (cell: Cell) => void
   registerCellRef: (id: string, node: HTMLButtonElement | null) => void
 }
 
-function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellClick, registerCellRef }: BoardProps) {
+function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, scale, onCellClick, registerCellRef }: BoardProps) {
   return (
-    <div className="board-viewport" onClick={(event) => event.stopPropagation()}>
+    <div className="board-viewport" style={{ '--board-scale': scale } as CSSProperties}>
       <div
         className="board"
         role="grid"
         aria-label="拼豆棋盘"
         style={{
-          gridTemplateColumns: `repeat(${metrics.columns}, var(--cell-size))`,
-          gridTemplateRows: `repeat(${metrics.rows}, var(--cell-size))`,
+          gridTemplateColumns: `repeat(${metrics.columns}, var(--board-cell-size))`,
+          gridTemplateRows: `repeat(${metrics.rows}, var(--board-cell-size))`,
         }}
       >
       {cells.map((cell) => (
@@ -380,6 +390,32 @@ function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, onCellCli
         </div>
       ))}
       </div>
+    </div>
+  )
+}
+
+type ZoomControlProps = {
+  value: number
+  onChange: (value: number) => void
+}
+
+function ZoomControl({ value, onChange }: ZoomControlProps) {
+  return (
+    <div className="zoom-control" aria-label="棋盘缩放控制">
+      <div className="zoom-icon" aria-hidden="true">
+        ⌕
+      </div>
+      <input
+        aria-label="棋盘缩放"
+        className="zoom-slider"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        aria-valuenow={value}
+        value={value}
+        onChange={(event) => onChange(Number(event.currentTarget.value))}
+      />
     </div>
   )
 }
@@ -640,6 +676,11 @@ function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60)
   const remaining = seconds % 60
   return `${minutes.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`
+}
+
+function getBoardScale(zoom: number) {
+  const scale = minBoardScale + (maxBoardScale - minBoardScale) * (zoom / 100)
+  return Number((scale + Number.EPSILON).toFixed(2)).toString()
 }
 
 export default App
