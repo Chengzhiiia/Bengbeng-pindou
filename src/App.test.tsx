@@ -29,6 +29,8 @@ const getBoardViewport = () => {
 
 const getZoomSlider = () => screen.getByRole('slider', { name: '棋盘缩放' }) as HTMLInputElement
 
+const getBoardScale = () => Number(getBoardViewport().style.getPropertyValue('--board-scale'))
+
 const expectBoardButtonSelected = (coordinate: string, selected: boolean) => {
   const cell = getBoardButtonAt(coordinate).closest('.cell')
 
@@ -80,7 +82,7 @@ describe('App', () => {
     expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.82')
   })
 
-  it('resets board zoom to the minimum when switching levels', () => {
+  it('resets board zoom to a full-board minimum when switching levels', () => {
     render(<App />)
 
     fireEvent.change(getZoomSlider(), { target: { value: '100' } })
@@ -88,7 +90,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(getZoomSlider()).toHaveValue('0')
-    expect(getBoardViewport().style.getPropertyValue('--board-scale')).toBe('0.72')
+    expect(getBoardScale()).toBeLessThan(0.72)
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {

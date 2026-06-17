@@ -18,6 +18,7 @@ const flightDurationMs = 260
 const flightStaggerMs = 20
 const minBoardScale = 0.72
 const maxBoardScale = 1.1
+const minZoomVisibleCells = 9
 
 const presetColorClass: Record<string, string> = {
   red: 'gem-red',
@@ -64,7 +65,6 @@ function App() {
   const isAnimating = flyingGems.length > 0
   const hiddenBoardGemIds = new Set(flyingGems.filter((gem) => gem.source === 'board').map((gem) => gem.fromId))
   const hiddenTraySlotIds = new Set(flyingGems.filter((gem) => gem.source === 'tray').map((gem) => gem.fromId))
-  const boardScale = getBoardScale(boardZoom)
 
   useEffect(() => {
     if (status !== 'playing' || isSettingsOpen) return
@@ -91,6 +91,7 @@ function App() {
   }, [])
 
   const boardMetrics = useMemo(() => getBoardMetrics(cells), [cells])
+  const boardScale = getBoardScale(boardZoom, boardMetrics)
 
   const resetLevel = (nextIndex = levelIndex) => {
     if (animationTimerRef.current !== null) {
@@ -678,8 +679,9 @@ function formatTime(seconds: number) {
   return `${minutes.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`
 }
 
-function getBoardScale(zoom: number) {
-  const scale = minBoardScale + (maxBoardScale - minBoardScale) * (zoom / 100)
+function getBoardScale(zoom: number, metrics: ReturnType<typeof getBoardMetrics>) {
+  const fittedMinScale = Math.min(minBoardScale, minZoomVisibleCells / Math.max(metrics.columns, metrics.rows))
+  const scale = fittedMinScale + (maxBoardScale - fittedMinScale) * (zoom / 100)
   return Number((scale + Number.EPSILON).toFixed(2)).toString()
 }
 
