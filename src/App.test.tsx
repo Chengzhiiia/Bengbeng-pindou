@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -145,6 +146,18 @@ describe('App', () => {
     fireEvent.click(getBoardButtonAt('1,0'))
 
     expect(getBoardButtonAt('1,0').querySelector('.gem')).not.toHaveClass('gem-selected')
+  })
+
+  it('does not draw the old square outline around selected board gems', () => {
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+
+    const selectedCell = getBoardButtonAt('1,0').closest('.cell')
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(selectedCell).toHaveClass('selected')
+    expect(appCss).not.toMatch(/\.cell\.selected\s*\{[^}]*outline/)
   })
 
   it('clears a board gem selection when clicking outside the board', () => {

@@ -237,8 +237,6 @@
 
 .cell.selected {
   z-index: 2;
-  outline: 4px solid rgb(255 246 150 / 82%);
-  outline-offset: 3px;
 }
 
 .cell-button {
