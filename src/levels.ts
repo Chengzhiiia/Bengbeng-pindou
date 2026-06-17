@@ -91,10 +91,10 @@ function makePixelArtLevelSpecs(rows: string[], colors: PixelColorMap): Array<[n
   const pixels = rows.flatMap((row, y) =>
     [...row].flatMap((token, x) => (token === '.' ? [] : [{ x, y, color: colors[token] }])),
   )
-  const gemColors = pixels.map(({ color }) => color)
-  const targetColors = makeBalancedTargetColors(gemColors)
+  const targetColors = pixels.map(({ color }) => color)
+  const gemColors = makeBalancedTargetColors(targetColors)
 
-  return pixels.map(({ x, y, color }, index) => [x, y, targetColors[index], color])
+  return pixels.map(({ x, y }, index) => [x, y, targetColors[index], gemColors[index]])
 }
 
 function gemColorForPosition(x: number, y: number, minX: number, width: number): GemColor {

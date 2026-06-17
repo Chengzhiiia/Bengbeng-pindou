@@ -178,32 +178,34 @@ describe('levels', () => {
     ])
   })
 
-  it('uses the cropped pixel-art bathing dog reference for the second level', () => {
+  it('uses the cropped pixel-art bathing dog reference as the second level target pattern', () => {
     const secondLevel = levels[1]
 
     expect(secondLevel.cells).toHaveLength(265)
     expect(dimensions(secondLevel)).toEqual({ columns: 23, rows: 20 })
-    expect(cellAt(secondLevel, 8, 0)?.gemColor).toBe('#111111')
-    expect(cellAt(secondLevel, 8, 1)?.gemColor).toBe('#f2d49c')
-    expect(cellAt(secondLevel, 0, 14)?.gemColor).toBe('#75baff')
-    expect(cellAt(secondLevel, 16, 15)?.gemColor).toBe('#ff2d2d')
-    expect(cellAt(secondLevel, 15, 14)?.gemColor).toBe('#ffd35d')
-    expect(cellAt(secondLevel, 8, 9)?.gemColor).toBe('#c77a08')
+    expect(cellAt(secondLevel, 8, 0)?.targetColor).toBe('#111111')
+    expect(cellAt(secondLevel, 8, 1)?.targetColor).toBe('#f2d49c')
+    expect(cellAt(secondLevel, 0, 14)?.targetColor).toBe('#75baff')
+    expect(cellAt(secondLevel, 16, 15)?.targetColor).toBe('#ff2d2d')
+    expect(cellAt(secondLevel, 15, 14)?.targetColor).toBe('#ffd35d')
+    expect(cellAt(secondLevel, 8, 9)?.targetColor).toBe('#c77a08')
+    expect(secondLevel.cells.some((cell) => cell.gemColor !== cell.targetColor)).toBe(true)
     expect(hasCell(secondLevel, 0, 0)).toBe(false)
     expect(hasCell(secondLevel, 22, 0)).toBe(false)
   })
 
-  it('uses the cropped pixel-art late-night dog reference for the third level', () => {
+  it('uses the cropped pixel-art late-night dog reference as the third level target pattern', () => {
     const thirdLevel = levels[2]
 
     expect(thirdLevel.title).toBe('第3关 小狗熬夜')
     expect(thirdLevel.cells).toHaveLength(283)
     expect(dimensions(thirdLevel)).toEqual({ columns: 20, rows: 22 })
-    expect(cellAt(thirdLevel, 6, 0)?.gemColor).toBe('#e4cd55')
-    expect(cellAt(thirdLevel, 13, 6)?.gemColor).toBe('#111111')
-    expect(cellAt(thirdLevel, 7, 11)?.gemColor).toBe('#fff8ec')
-    expect(cellAt(thirdLevel, 16, 8)?.gemColor).toBe('#ae713d')
-    expect(cellAt(thirdLevel, 12, 6)?.gemColor).toBe('#d09b52')
+    expect(cellAt(thirdLevel, 6, 0)?.targetColor).toBe('#e4cd55')
+    expect(cellAt(thirdLevel, 13, 6)?.targetColor).toBe('#111111')
+    expect(cellAt(thirdLevel, 7, 11)?.targetColor).toBe('#fff8ec')
+    expect(cellAt(thirdLevel, 16, 8)?.targetColor).toBe('#ae713d')
+    expect(cellAt(thirdLevel, 12, 6)?.targetColor).toBe('#d09b52')
+    expect(thirdLevel.cells.some((cell) => cell.gemColor !== cell.targetColor)).toBe(true)
     expect(hasCell(thirdLevel, 0, 0)).toBe(false)
     expect(hasCell(thirdLevel, 21, 21)).toBe(false)
   })
