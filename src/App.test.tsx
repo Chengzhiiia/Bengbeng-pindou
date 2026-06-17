@@ -148,7 +148,7 @@ describe('App', () => {
     expect(getBoardButtonAt('1,0').querySelector('.gem')).not.toHaveClass('gem-selected')
   })
 
-  it('does not draw the old square outline around selected board gems', () => {
+  it('does not draw square frames around selected board gems', () => {
     render(<App />)
 
     fireEvent.click(getBoardButtonAt('1,0'))
@@ -158,6 +158,7 @@ describe('App', () => {
 
     expect(selectedCell).toHaveClass('selected')
     expect(appCss).not.toMatch(/\.cell\.selected\s*\{[^}]*outline/)
+    expect(appCss).toMatch(/\.cell\.selected::before\s*\{[^}]*opacity:\s*0/)
   })
 
   it('clears a board gem selection when clicking outside the board', () => {
