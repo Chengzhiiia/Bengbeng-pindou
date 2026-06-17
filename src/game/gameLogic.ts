@@ -34,36 +34,11 @@ export function findConnectedGemGroup(cells: Cell[], startCellId: string): strin
     }
   }
 
-  return [...visited].sort((a, b) => sortCellsByPosition(cells, a, b))
+  return [...visited]
 }
 
-export function getEdgePriorityCellIds(cells: Cell[], selectedCellIds: string[]): string[] {
-  const selected = new Set(selectedCellIds)
-  const remaining = new Set(selectedCellIds)
-  const byPosition = new Map(cells.map((cell) => [keyFor(cell.x, cell.y), cell]))
-  const ordered: string[] = []
-
-  while (remaining.size > 0) {
-    const layer = [...remaining]
-      .filter((id) => {
-        const cell = byId(cells, id)
-        if (!cell) return false
-
-        return directions.some(([dx, dy]) => {
-          const neighbor = byPosition.get(keyFor(cell.x + dx, cell.y + dy))
-          return !neighbor || !selected.has(neighbor.id) || !remaining.has(neighbor.id)
-        })
-      })
-      .sort((a, b) => sortCellsByPosition(cells, a, b))
-
-    const nextLayer = layer.length > 0 ? layer : [...remaining].sort((a, b) => sortCellsByPosition(cells, a, b))
-    for (const id of nextLayer) {
-      ordered.push(id)
-      remaining.delete(id)
-    }
-  }
-
-  return ordered
+export function getMovePriorityCellIds(cells: Cell[], selectedCellIds: string[]): string[] {
+  return selectedCellIds.filter((id) => byId(cells, id))
 }
 
 export function moveBoardSelectionToTray(
@@ -72,7 +47,7 @@ export function moveBoardSelectionToTray(
   selectedCellIds: string[],
 ): { cells: Cell[]; tray: TraySlot[]; movedCellIds: string[] } {
   const openSlots = tray.filter((slot) => !slot.gemColor).length
-  const movedCellIds = getEdgePriorityCellIds(cells, selectedCellIds).slice(0, openSlots)
+  const movedCellIds = getMovePriorityCellIds(cells, selectedCellIds).slice(0, openSlots)
   const moved = new Set(movedCellIds)
   const movedGems = movedCellIds
     .map((id) => byId(cells, id)?.gemColor)
@@ -103,7 +78,7 @@ export function moveBoardSelectionToBoard(
   }
 
   const placementCellIds = getPlacementCellIds(cells, targetCellId, color)
-  const movedCellIds = getEdgePriorityCellIds(cells, selectedCellIds).slice(0, placementCellIds.length)
+  const movedCellIds = getMovePriorityCellIds(cells, selectedCellIds).slice(0, placementCellIds.length)
   const placedCellIds = placementCellIds.slice(0, movedCellIds.length)
   const moved = new Set(movedCellIds)
   const placed = new Set(placedCellIds)

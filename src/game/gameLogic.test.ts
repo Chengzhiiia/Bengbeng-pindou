@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   createTray,
   findConnectedGemGroup,
-  getEdgePriorityCellIds,
+  getMovePriorityCellIds,
   isLevelSolved,
   moveBoardSelectionToTray,
   moveBoardSelectionToBoard,
@@ -32,6 +32,17 @@ describe('game logic', () => {
     expect(findConnectedGemGroup(cells, 'a')).toEqual(['a', 'b', 'd'])
   })
 
+  it('keeps the clicked gem first and then nearby gems in the selected group order', () => {
+    const cells: Cell[] = []
+    for (let y = 0; y < 3; y += 1) {
+      for (let x = 0; x < 3; x += 1) {
+        cells.push(cell(`${x},${y}`, x, y, 'red', 'blue'))
+      }
+    }
+
+    expect(findConnectedGemGroup(cells, '1,1').slice(0, 5)).toEqual(['1,1', '1,0', '2,1', '1,2', '0,1'])
+  })
+
   it('does not select a gem that already matches its target cell', () => {
     const cells = [
       cell('a', 0, 0, 'red', 'red'),
@@ -42,7 +53,7 @@ describe('game logic', () => {
     expect(findConnectedGemGroup(cells, 'a')).toEqual([])
   })
 
-  it('prioritizes outer edge gems before interior gems when tray capacity is limited', () => {
+  it('prioritizes the clicked gem and nearby gems when tray capacity is limited', () => {
     const cells: Cell[] = []
     for (let y = 0; y < 3; y += 1) {
       for (let x = 0; x < 3; x += 1) {
@@ -50,13 +61,12 @@ describe('game logic', () => {
       }
     }
 
-    const ordered = getEdgePriorityCellIds(cells, cells.map(({ id }) => id))
+    const ordered = getMovePriorityCellIds(cells, ['1,1', '1,0', '2,1', '1,2', '0,1', '0,0', '2,0', '2,2', '0,2'])
 
-    expect(ordered.slice(0, 8)).not.toContain('1,1')
-    expect(ordered.at(-1)).toBe('1,1')
+    expect(ordered.slice(0, 5)).toEqual(['1,1', '1,0', '2,1', '1,2', '0,1'])
   })
 
-  it('moves only tray-capacity edge-priority board gems and leaves the rest on board', () => {
+  it('moves only tray-capacity clicked-neighborhood board gems and leaves the rest on board', () => {
     const cells: Cell[] = []
     for (let y = 0; y < 3; y += 1) {
       for (let x = 0; x < 3; x += 1) {
@@ -67,12 +77,12 @@ describe('game logic', () => {
       index < 10 ? { ...slot, gemColor: 'blue' as const } : slot,
     )
 
-    const result = moveBoardSelectionToTray(cells, tray, cells.map(({ id }) => id))
+    const result = moveBoardSelectionToTray(cells, tray, ['1,1', '1,0', '2,1', '1,2', '0,1', '0,0', '2,0', '2,2', '0,2'])
 
-    expect(result.movedCellIds).toEqual(['0,0', '1,0'])
+    expect(result.movedCellIds).toEqual(['1,1', '1,0'])
     expect(result.tray.filter((slot) => slot.gemColor === 'red')).toHaveLength(2)
-    expect(result.cells.find(({ id }) => id === '0,0')?.gemColor).toBeUndefined()
-    expect(result.cells.find(({ id }) => id === '1,1')?.gemColor).toBe('red')
+    expect(result.cells.find(({ id }) => id === '1,1')?.gemColor).toBeUndefined()
+    expect(result.cells.find(({ id }) => id === '0,0')?.gemColor).toBe('red')
   })
 
   it('moves tray gems only into matching target cells', () => {
