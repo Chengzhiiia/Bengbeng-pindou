@@ -115,6 +115,15 @@ const boundingArea = (level: Level) => {
   return (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1)
 }
 
+const dimensions = (level: Level) => {
+  const xs = level.cells.map(({ x }) => x)
+  const ys = level.cells.map(({ y }) => y)
+  return {
+    columns: Math.max(...xs) - Math.min(...xs) + 1,
+    rows: Math.max(...ys) - Math.min(...ys) + 1,
+  }
+}
+
 const shapeSignature = (level: Level) =>
   level.cells
     .map(({ x, y }) => `${x},${y}`)
@@ -142,8 +151,8 @@ describe('levels', () => {
   it('uses similarly large boards after the introductory level', () => {
     const largeLevelSizes = levels.slice(1).map((level) => level.cells.length)
 
-    expect(largeLevelSizes[0]).toBeGreaterThan(900)
-    expect(largeLevelSizes[1]).toBeGreaterThan(900)
+    expect(largeLevelSizes[0]).toBe(265)
+    expect(largeLevelSizes[1]).toBe(283)
     expect(largeLevelSizes.slice(2).every((size) => size >= 200 && size <= 260)).toBe(true)
     expect(Math.max(...largeLevelSizes.slice(2)) - Math.min(...largeLevelSizes.slice(2))).toBeLessThanOrEqual(50)
   })
@@ -169,34 +178,36 @@ describe('levels', () => {
     ])
   })
 
-  it('uses the cropped pixel-art bathing dog reference for the second level', () => {
+  it('uses the cropped pixel-art bathing dog reference as the second level target pattern', () => {
     const secondLevel = levels[1]
 
-    expect(secondLevel.cells).toHaveLength(994)
-    expect(cellAt(secondLevel, 16, 0)?.gemColor).toBe('#111111')
-    expect(cellAt(secondLevel, 17, 0)?.gemColor).toBe('#111111')
-    expect(cellAt(secondLevel, 18, 0)?.gemColor).toBe('#111111')
-    expect(cellAt(secondLevel, 16, 1)?.gemColor).toBe('#f2d49c')
-    expect(cellAt(secondLevel, 0, 29)?.gemColor).toBe('#75baff')
-    expect(cellAt(secondLevel, 30, 29)?.gemColor).toBe('#ff2d2d')
-    expect(cellAt(secondLevel, 30, 28)?.gemColor).toBe('#ffd35d')
-    expect(cellAt(secondLevel, 31, 24)?.gemColor).toBe('#c77a08')
+    expect(secondLevel.cells).toHaveLength(265)
+    expect(dimensions(secondLevel)).toEqual({ columns: 23, rows: 20 })
+    expect(cellAt(secondLevel, 8, 0)?.targetColor).toBe('#111111')
+    expect(cellAt(secondLevel, 8, 1)?.targetColor).toBe('#f2d49c')
+    expect(cellAt(secondLevel, 0, 14)?.targetColor).toBe('#75baff')
+    expect(cellAt(secondLevel, 16, 15)?.targetColor).toBe('#ff2d2d')
+    expect(cellAt(secondLevel, 15, 14)?.targetColor).toBe('#ffd35d')
+    expect(cellAt(secondLevel, 8, 9)?.targetColor).toBe('#c77a08')
+    expect(secondLevel.cells.some((cell) => cell.gemColor !== cell.targetColor)).toBe(true)
     expect(hasCell(secondLevel, 0, 0)).toBe(false)
-    expect(hasCell(secondLevel, 44, 0)).toBe(false)
+    expect(hasCell(secondLevel, 22, 0)).toBe(false)
   })
 
-  it('uses the cropped pixel-art late-night dog reference for the third level', () => {
+  it('uses the cropped pixel-art late-night dog reference as the third level target pattern', () => {
     const thirdLevel = levels[2]
 
     expect(thirdLevel.title).toBe('第3关 小狗熬夜')
-    expect(thirdLevel.cells).toHaveLength(1068)
-    expect(cellAt(thirdLevel, 13, 0)?.gemColor).toBe('#e4cd55')
-    expect(cellAt(thirdLevel, 27, 12)?.gemColor).toBe('#111111')
-    expect(cellAt(thirdLevel, 21, 23)?.gemColor).toBe('#fff8ec')
-    expect(cellAt(thirdLevel, 34, 16)?.gemColor).toBe('#ae713d')
-    expect(cellAt(thirdLevel, 24, 12)?.gemColor).toBe('#d09b52')
+    expect(thirdLevel.cells).toHaveLength(283)
+    expect(dimensions(thirdLevel)).toEqual({ columns: 20, rows: 22 })
+    expect(cellAt(thirdLevel, 6, 0)?.targetColor).toBe('#e4cd55')
+    expect(cellAt(thirdLevel, 13, 6)?.targetColor).toBe('#111111')
+    expect(cellAt(thirdLevel, 7, 11)?.targetColor).toBe('#fff8ec')
+    expect(cellAt(thirdLevel, 16, 8)?.targetColor).toBe('#ae713d')
+    expect(cellAt(thirdLevel, 12, 6)?.targetColor).toBe('#d09b52')
+    expect(thirdLevel.cells.some((cell) => cell.gemColor !== cell.targetColor)).toBe(true)
     expect(hasCell(thirdLevel, 0, 0)).toBe(false)
-    expect(hasCell(thirdLevel, 43, 43)).toBe(false)
+    expect(hasCell(thirdLevel, 21, 21)).toBe(false)
   })
 
   it('adds color variety from the second level onward', () => {

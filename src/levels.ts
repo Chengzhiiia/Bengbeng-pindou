@@ -30,6 +30,43 @@ const makeShapedLevel = (id: number, title: string, rows: RowSpans[]): Level =>
 const makePixelArtLevel = (id: number, title: string, rows: string[], colors: PixelColorMap): Level =>
   makeLevel(id, title, 300, makePixelArtLevelSpecs(rows, colors))
 
+const halfScalePixelRows = (rows: string[]): string[] => {
+  const maxWidth = Math.max(...rows.map((row) => row.length))
+  const scaledRows: string[] = []
+
+  for (let y = 0; y < rows.length; y += 2) {
+    let scaledRow = ''
+
+    for (let x = 0; x < maxWidth; x += 2) {
+      const tokens = [rows[y]?.[x], rows[y]?.[x + 1], rows[y + 1]?.[x], rows[y + 1]?.[x + 1]].filter(
+        (token): token is string => Boolean(token && token !== '.'),
+      )
+      scaledRow += tokens.length >= 2 ? mostFrequentToken(tokens) : '.'
+    }
+
+    scaledRows.push(scaledRow.replace(/\.+$/, ''))
+  }
+
+  return scaledRows
+}
+
+function mostFrequentToken(tokens: string[]): string {
+  const counts = new Map<string, number>()
+  let bestToken = tokens[0]
+  let bestCount = 0
+
+  for (const token of tokens) {
+    const count = (counts.get(token) ?? 0) + 1
+    counts.set(token, count)
+    if (count > bestCount) {
+      bestToken = token
+      bestCount = count
+    }
+  }
+
+  return bestToken
+}
+
 function makeShapedLevelSpecs(rows: RowSpans[]): Array<[number, number, GemColor, GemColor]> {
   const positions = rows.flatMap((spans, y) =>
     spans.flatMap(([startX, endX]) =>
@@ -54,10 +91,10 @@ function makePixelArtLevelSpecs(rows: string[], colors: PixelColorMap): Array<[n
   const pixels = rows.flatMap((row, y) =>
     [...row].flatMap((token, x) => (token === '.' ? [] : [{ x, y, color: colors[token] }])),
   )
-  const gemColors = pixels.map(({ color }) => color)
-  const targetColors = makeBalancedTargetColors(gemColors)
+  const targetColors = pixels.map(({ color }) => color)
+  const gemColors = makeBalancedTargetColors(targetColors)
 
-  return pixels.map(({ x, y, color }, index) => [x, y, targetColors[index], color])
+  return pixels.map(({ x, y }, index) => [x, y, targetColors[index], gemColors[index]])
 }
 
 function gemColorForPosition(x: number, y: number, minX: number, width: number): GemColor {
@@ -258,8 +295,8 @@ export const levels: Level[] = [
     [5, 4, 'red', 'blue'],
     [5, 5, 'red', 'red'],
   ]),
-  makePixelArtLevel(2, '第2关 洗澡小狗', bathingDogPixelRows, bathingDogPixelColors),
-  makePixelArtLevel(3, '第3关 小狗熬夜', lateNightDogPixelRows, lateNightDogPixelColors),
+  makePixelArtLevel(2, '第2关 洗澡小狗', halfScalePixelRows(bathingDogPixelRows), bathingDogPixelColors),
+  makePixelArtLevel(3, '第3关 小狗熬夜', halfScalePixelRows(lateNightDogPixelRows), lateNightDogPixelColors),
   makeShapedLevel(4, '第4关 台灯', lampRows),
   makeShapedLevel(5, '第5关 礼物相框', giftRows),
   makeShapedLevel(6, '第6关 温馨客厅', roomRows),

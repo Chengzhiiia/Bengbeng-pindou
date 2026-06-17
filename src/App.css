@@ -195,63 +195,47 @@
   aspect-ratio: 1;
   min-width: 0;
   min-height: 0;
-  border-radius: calc(var(--board-cell-size) * 0.18);
+  border-radius: 0;
   position: relative;
   display: grid;
   place-items: center;
-  box-shadow:
-    inset 0 0 0 3px rgb(255 255 255 / 18%),
-    inset 0 -7px 11px rgb(0 0 0 / 17%);
-}
-
-.cell::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  z-index: -1;
-  border-radius: calc(var(--board-cell-size) * 0.24);
-  background: #f5fbff;
-  box-shadow: 0 0 0 2px #9aa6b7;
+  box-shadow: none;
 }
 
 .target-red {
-  background: linear-gradient(145deg, #ff6759, #d9362e);
+  background: #ff6759;
 }
 
 .target-blue {
-  background: linear-gradient(145deg, #67c8ef, #2290c3);
+  background: #67c8ef;
 }
 
 .target-yellow {
-  background: linear-gradient(145deg, #ffe382, #e4ae2e);
+  background: #ffe382;
 }
 
 .target-green {
-  background: linear-gradient(145deg, #9be571, #40a858);
+  background: #9be571;
 }
 
 .target-purple {
-  background: linear-gradient(145deg, #c29bff, #7b58ce);
+  background: #c29bff;
 }
 
 .target-custom {
-  background: linear-gradient(145deg, var(--target-color), var(--target-shadow));
+  background: var(--target-color);
 }
 
 .cell.selected {
   z-index: 2;
 }
 
-.cell.selected::before {
-  opacity: 0;
-}
-
 .cell-button {
   width: 100%;
   height: 100%;
   aspect-ratio: 1;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: inherit;
+  border: 0;
+  border-radius: 0;
   display: grid;
   place-items: center;
   padding: 0;
@@ -260,8 +244,8 @@
 }
 
 .gem {
-  width: 84%;
-  height: 84%;
+  width: 72%;
+  height: 72%;
   aspect-ratio: 1;
   border-radius: 18%;
   position: relative;
@@ -292,8 +276,8 @@
 }
 
 .gem-small {
-  width: 78%;
-  height: 78%;
+  width: 70%;
+  height: 70%;
   border-radius: 9px;
 }
 
@@ -592,6 +576,7 @@
 }
 
 .retry-button,
+.extend-time-button,
 .next-button {
   width: min(100%, 230px);
   min-height: 56px;
@@ -606,6 +591,13 @@
 
 .retry-button {
   background: linear-gradient(180deg, #a9ef77, #5cc850);
+}
+
+.extend-time-button {
+  background: #fff;
+  border: 3px solid #43a9ef;
+  color: #43a9ef;
+  text-shadow: none;
 }
 
 .next-button {

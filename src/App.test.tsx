@@ -162,7 +162,14 @@ describe('App', () => {
 
     expect(selectedCell).toHaveClass('selected')
     expect(appCss).not.toMatch(/\.cell\.selected\s*\{[^}]*outline/)
-    expect(appCss).toMatch(/\.cell\.selected::before\s*\{[^}]*opacity:\s*0/)
+    expect(appCss).not.toMatch(/\.cell\.selected::before/)
+  })
+
+  it('does not draw backing frames around board edge cells', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).not.toMatch(/\.cell::before/)
+    expect(appCss).not.toMatch(/\.cell\.selected::before/)
   })
 
   it('keeps board cells and gems square on all levels', () => {
@@ -173,6 +180,26 @@ describe('App', () => {
     expect(appCss).toMatch(/\.gem\s*\{[^}]*aspect-ratio:\s*1/)
     expect(appCss).not.toMatch(/\.cell\s*\{[^}]*border-radius:\s*\d+px/)
     expect(appCss).not.toMatch(/\.gem\s*\{[^}]*border-radius:\s*\d+px/)
+  })
+
+  it('renders adjacent same-color target cells as continuous color regions', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*border-radius:\s*0/)
+    expect(appCss).toMatch(/\.cell\s*\{[^}]*box-shadow:\s*none/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*border:\s*0/)
+    expect(appCss).toMatch(/\.cell-button\s*\{[^}]*border-radius:\s*0/)
+    expect(appCss).not.toMatch(/\.target-[\w-]+\s*\{[^}]*linear-gradient/)
+    expect(appCss).not.toMatch(/\.target-custom\s*\{[^}]*linear-gradient/)
+  })
+
+  it('keeps board gems smaller than target cells so the target color remains visible', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*width:\s*72%/)
+    expect(appCss).toMatch(/\.gem\s*\{[^}]*height:\s*72%/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*width:\s*84%/)
+    expect(appCss).not.toMatch(/\.gem\s*\{[^}]*height:\s*84%/)
   })
 
   it('clears a board gem selection when clicking outside the board', () => {
@@ -311,6 +338,36 @@ describe('App', () => {
     finishAnimation()
 
     expect(screen.getAllByRole('button', { name: /暂存槽 \d+ 蓝色宝石/ })).toHaveLength(12)
+  })
+
+  it('extends the current failed level by five minutes without resetting progress', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+
+    act(() => {
+      vi.advanceTimersByTime(300000)
+    })
+
+    expect(screen.getByRole('dialog', { name: '时间结束' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '再给嘣5分钟' }))
+
+    expect(screen.queryByRole('dialog', { name: '时间结束' })).not.toBeInTheDocument()
+    expect(screen.getByText('05:00')).toBeInTheDocument()
+    expect(getTrayButton(1).getAttribute('aria-label')).toContain('蓝色宝石')
+  })
+
+  it('styles the failed-level time extension button as white with a blue border', () => {
+    const appCss = readFileSync('src/App.css', 'utf-8')
+
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*background:\s*#fff/)
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*border:\s*3px solid #43a9ef/)
+    expect(appCss).toMatch(/\.extend-time-button\s*\{[^}]*color:\s*#43a9ef/)
   })
 
   it('opens settings without restarting the current board', async () => {
