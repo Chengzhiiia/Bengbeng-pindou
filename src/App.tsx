@@ -157,6 +157,18 @@ function App() {
     }
 
     if (selection?.source === 'tray') {
+      if (cell.gemColor) {
+        const cellIds = findConnectedGemGroup(cells, cell.id)
+        if (cellIds.length === 0) {
+          setSelection(null)
+          setToast('这颗宝石已经在正确颜色的格子中')
+          return
+        }
+        setSelection({ source: 'board', color: cell.gemColor, cellIds })
+        setToast(`已选中 ${cellIds.length} 颗${colorLabel(cell.gemColor)}宝石，可放入暂存区或同色空格`)
+        return
+      }
+
       const result = moveTraySelectionToBoard(cells, tray, cell.id, selection.color)
       if (result.placedCellIds.length === 0) {
         setToast(`只能放入${colorLabel(selection.color)}空格`)
@@ -239,16 +251,20 @@ function App() {
     }
 
     if (slot.gemColor) {
+      if (selection?.source === 'tray' && selection.color === slot.gemColor) {
+        clearSelection()
+        return
+      }
       setSelection({ source: 'tray', color: slot.gemColor })
-    setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
+      setToast(`已选中暂存区的${colorLabel(slot.gemColor)}宝石，点击同色空格放入`)
       return
     }
 
     setToast(selection ? '点击空暂存槽可移动棋盘选中宝石' : '先选择棋盘宝石或暂存区宝石')
   }
 
-  const clearBoardSelection = () => {
-    if (selection?.source !== 'board' || isAnimating) return
+  const clearSelection = () => {
+    if (!selection || isAnimating) return
     setSelection(null)
     setToast('已取消选择')
   }
@@ -271,7 +287,7 @@ function App() {
         </button>
       </header>
 
-      <section className="play-area" aria-label="游戏区域" onClick={clearBoardSelection}>
+      <section className="play-area" aria-label="游戏区域" onClick={clearSelection}>
         <div className="board-stage" onClick={(event) => event.stopPropagation()}>
           <ZoomControl value={boardZoom} onChange={setBoardZoom} />
           <Board

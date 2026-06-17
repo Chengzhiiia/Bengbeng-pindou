@@ -38,6 +38,10 @@ const expectBoardButtonSelected = (coordinate: string, selected: boolean) => {
   expect(cell?.classList.contains('selected')).toBe(selected)
 }
 
+const expectTrayButtonSelected = (slotNumber: number, selected: boolean) => {
+  expect(getTrayButton(slotNumber).classList.contains('selected')).toBe(selected)
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -236,6 +240,52 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: '第1关 蓝色宝石 5,1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '暂存槽 1 空' })).toBeInTheDocument()
+  })
+
+  it('clears a tray gem selection when clicking the selected tray gem again', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(getTrayButton(1))
+
+    expectTrayButtonSelected(1, false)
+  })
+
+  it('clears a tray gem selection when clicking outside the board', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(screen.getByRole('status'))
+
+    expectTrayButtonSelected(1, false)
+  })
+
+  it('switches from a tray gem selection to a clicked board gem block', async () => {
+    vi.useFakeTimers()
+    render(<App />)
+
+    fireEvent.click(getBoardButtonAt('1,0'))
+    fireEvent.click(getTrayButton(1))
+    finishAnimation()
+    fireEvent.click(getTrayButton(1))
+    expectTrayButtonSelected(1, true)
+
+    fireEvent.click(getBoardButtonAt('5,1'))
+
+    expectTrayButtonSelected(1, false)
+    expectBoardButtonSelected('5,1', true)
   })
 
   it('ignores extra clicks while gems are flying', async () => {
