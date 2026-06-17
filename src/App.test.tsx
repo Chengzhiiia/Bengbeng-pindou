@@ -101,7 +101,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(getZoomSlider()).toHaveValue('0')
-    expect(getBoardScale()).toBeLessThan(0.92)
+    expect(getBoardScale()).toBe(0.43)
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {
@@ -204,7 +204,8 @@ describe('App', () => {
 
     expect(appCss).toMatch(/\.prompt\s*\{[^}]*display:\s*none/)
     expect(appCss).not.toMatch(/\.prompt\s*\{[^}]*display:\s*flex/)
-    expect(appCss).toMatch(/\.board-viewport\s*\{[^}]*max-height:\s*min\(66vh,\s*520px\)/)
+    expect(appCss).toMatch(/\.board-viewport\s*\{[^}]*width:\s*100%/)
+    expect(appCss).toMatch(/\.board-viewport\s*\{[^}]*max-height:\s*min\(72vh,\s*560px\)/)
     expect(appCss).toMatch(/\.play-area\s*\{[^}]*gap:\s*12px/)
   })
 

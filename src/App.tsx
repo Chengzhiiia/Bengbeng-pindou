@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import './App.css'
 import {
   colorLabel,
@@ -19,7 +19,11 @@ const flightStaggerMs = 20
 const gemVisualSizeRatio = 0.72
 const minBoardScale = 0.92
 const maxBoardScale = 1.22
-const minZoomVisibleCells = 12
+const fallbackBoardViewportMetrics = {
+  width: 472,
+  height: 452,
+  cellSize: 48,
+}
 
 const presetColorClass: Record<string, string> = {
   red: 'gem-red',
@@ -46,6 +50,12 @@ type FlyingGem = {
   delayMs: number
 }
 
+type BoardViewportMetrics = {
+  width: number
+  height: number
+  cellSize: number
+}
+
 function App() {
   const [levelIndex, setLevelIndex] = useState(0)
   const [cells, setCells] = useState<Cell[]>(() => cloneCells(levels[0]))
@@ -57,6 +67,7 @@ function App() {
   const [flyingGems, setFlyingGems] = useState<FlyingGem[]>([])
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [boardZoom, setBoardZoom] = useState(0)
+  const [boardViewportMetrics, setBoardViewportMetrics] = useState<BoardViewportMetrics | null>(null)
   const boardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const trayRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const animationTimerRef = useRef<number | null>(null)
@@ -92,7 +103,21 @@ function App() {
   }, [])
 
   const boardMetrics = useMemo(() => getBoardMetrics(cells), [cells])
-  const boardScale = getBoardScale(boardZoom, boardMetrics)
+  const boardScale = getBoardScale(boardZoom, boardMetrics, boardViewportMetrics)
+  const handleBoardViewportMetricsChange = useCallback((nextMetrics: BoardViewportMetrics) => {
+    setBoardViewportMetrics((currentMetrics) => {
+      if (
+        currentMetrics &&
+        currentMetrics.width === nextMetrics.width &&
+        currentMetrics.height === nextMetrics.height &&
+        currentMetrics.cellSize === nextMetrics.cellSize
+      ) {
+        return currentMetrics
+      }
+
+      return nextMetrics
+    })
+  }, [])
 
   const resetLevel = (nextIndex = levelIndex) => {
     if (animationTimerRef.current !== null) {
@@ -308,6 +333,7 @@ function App() {
             selectedCellIds={selectedCellIds}
             hiddenGemIds={hiddenBoardGemIds}
             scale={boardScale}
+            onViewportMetricsChange={handleBoardViewportMetricsChange}
             onCellClick={handleCellClick}
             registerCellRef={(id, node) => {
               boardRefs.current[id] = node
@@ -381,13 +407,68 @@ type BoardProps = {
   selectedCellIds: Set<string>
   hiddenGemIds: Set<string>
   scale: string
+  onViewportMetricsChange: (metrics: BoardViewportMetrics) => void
   onCellClick: (cell: Cell) => void
   registerCellRef: (id: string, node: HTMLButtonElement | null) => void
 }
 
-function Board({ level, cells, metrics, selectedCellIds, hiddenGemIds, scale, onCellClick, registerCellRef }: BoardProps) {
+function Board({
+  level,
+  cells,
+  metrics,
+  selectedCellIds,
+  hiddenGemIds,
+  scale,
+  onViewportMetricsChange,
+  onCellClick,
+  registerCellRef,
+}: BoardProps) {
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+
+  useLayoutEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    const measure = () => {
+      const style = window.getComputedStyle(viewport)
+      const rect = viewport.getBoundingClientRect()
+      const horizontalPadding = parseCssPixelValue(style.paddingLeft) + parseCssPixelValue(style.paddingRight)
+      const verticalPadding = parseCssPixelValue(style.paddingTop) + parseCssPixelValue(style.paddingBottom)
+      const maxHeight = parseCssPixelValue(style.maxHeight)
+      const viewportWidth = viewport.clientWidth || rect.width
+      const viewportHeight = maxHeight || viewport.clientHeight || rect.height
+      const currentScale = Number.parseFloat(style.getPropertyValue('--board-scale')) || Number.parseFloat(scale) || 1
+      const measuredCell = viewport.querySelector<HTMLElement>('.cell')?.getBoundingClientRect().width ?? 0
+      const cellSize = measuredCell > 0 ? measuredCell / currentScale : fallbackBoardViewportMetrics.cellSize
+      const nextMetrics = {
+        width: roundMetric(viewportWidth - horizontalPadding),
+        height: roundMetric(viewportHeight - verticalPadding),
+        cellSize: roundMetric(cellSize),
+      }
+
+      if (nextMetrics.width > 0 && nextMetrics.height > 0 && nextMetrics.cellSize > 0) {
+        onViewportMetricsChange(nextMetrics)
+      }
+    }
+
+    measure()
+    window.addEventListener('resize', measure)
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => window.removeEventListener('resize', measure)
+    }
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(viewport)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [onViewportMetricsChange, scale])
+
   return (
-    <div className="board-viewport" style={{ '--board-scale': scale } as CSSProperties}>
+    <div ref={viewportRef} className="board-viewport" style={{ '--board-scale': scale } as CSSProperties}>
       <div
         className="board"
         role="grid"
@@ -710,10 +791,25 @@ function formatTime(seconds: number) {
   return `${minutes.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`
 }
 
-function getBoardScale(zoom: number, metrics: ReturnType<typeof getBoardMetrics>) {
-  const fittedMinScale = Math.min(minBoardScale, minZoomVisibleCells / Math.max(metrics.columns, metrics.rows))
+function getBoardScale(zoom: number, metrics: ReturnType<typeof getBoardMetrics>, viewportMetrics: BoardViewportMetrics | null = null) {
+  const fittedMinScale = getFullBoardScale(metrics, viewportMetrics ?? fallbackBoardViewportMetrics)
   const scale = fittedMinScale + (maxBoardScale - fittedMinScale) * (zoom / 100)
   return Number((scale + Number.EPSILON).toFixed(2)).toString()
+}
+
+function getFullBoardScale(metrics: ReturnType<typeof getBoardMetrics>, viewportMetrics: BoardViewportMetrics) {
+  const widthScale = viewportMetrics.width / (metrics.columns * viewportMetrics.cellSize)
+  const heightScale = viewportMetrics.height / (metrics.rows * viewportMetrics.cellSize)
+  return Math.max(0.16, Math.min(minBoardScale, widthScale, heightScale))
+}
+
+function parseCssPixelValue(value: string) {
+  const parsedValue = Number.parseFloat(value)
+  return Number.isFinite(parsedValue) ? parsedValue : 0
+}
+
+function roundMetric(value: number) {
+  return Math.max(0, Number(value.toFixed(2)))
 }
 
 export default App

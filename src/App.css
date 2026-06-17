@@ -171,8 +171,8 @@
 .board-viewport {
   --board-scale: 0.72;
   --board-cell-size: calc(var(--cell-size) * var(--board-scale));
-  width: min(100%, 488px);
-  max-height: min(66vh, 520px);
+  width: 100%;
+  max-height: min(72vh, 560px);
   overflow: auto;
   padding: 8px;
   border-radius: 16px;
