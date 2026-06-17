@@ -182,6 +182,7 @@
 
 .board {
   display: grid;
+  gap: 1px;
   justify-content: center;
   align-content: center;
   width: max-content;

@@ -23,6 +23,7 @@ const fallbackBoardViewportMetrics = {
   width: 472,
   height: 452,
   cellSize: 48,
+  gapSize: 1,
 }
 
 const presetColorClass: Record<string, string> = {
@@ -54,6 +55,7 @@ type BoardViewportMetrics = {
   width: number
   height: number
   cellSize: number
+  gapSize: number
 }
 
 function App() {
@@ -110,7 +112,8 @@ function App() {
         currentMetrics &&
         currentMetrics.width === nextMetrics.width &&
         currentMetrics.height === nextMetrics.height &&
-        currentMetrics.cellSize === nextMetrics.cellSize
+        currentMetrics.cellSize === nextMetrics.cellSize &&
+        currentMetrics.gapSize === nextMetrics.gapSize
       ) {
         return currentMetrics
       }
@@ -440,13 +443,15 @@ function Board({
       const currentScale = Number.parseFloat(style.getPropertyValue('--board-scale')) || Number.parseFloat(scale) || 1
       const measuredCell = viewport.querySelector<HTMLElement>('.cell')?.getBoundingClientRect().width ?? 0
       const cellSize = measuredCell > 0 ? measuredCell / currentScale : fallbackBoardViewportMetrics.cellSize
+      const gapSize = parseCssPixelValue(window.getComputedStyle(viewport.querySelector<HTMLElement>('.board') ?? viewport).gap)
       const nextMetrics = {
         width: roundMetric(viewportWidth - horizontalPadding),
         height: roundMetric(viewportHeight - verticalPadding),
         cellSize: roundMetric(cellSize),
+        gapSize: roundMetric(gapSize),
       }
 
-      if (nextMetrics.width > 0 && nextMetrics.height > 0 && nextMetrics.cellSize > 0) {
+      if (nextMetrics.width > 0 && nextMetrics.height > 0 && nextMetrics.cellSize > 0 && nextMetrics.gapSize >= 0) {
         onViewportMetricsChange(nextMetrics)
       }
     }
@@ -798,8 +803,10 @@ function getBoardScale(zoom: number, metrics: ReturnType<typeof getBoardMetrics>
 }
 
 function getFullBoardScale(metrics: ReturnType<typeof getBoardMetrics>, viewportMetrics: BoardViewportMetrics) {
-  const widthScale = viewportMetrics.width / (metrics.columns * viewportMetrics.cellSize)
-  const heightScale = viewportMetrics.height / (metrics.rows * viewportMetrics.cellSize)
+  const horizontalGapWidth = Math.max(0, metrics.columns - 1) * viewportMetrics.gapSize
+  const verticalGapHeight = Math.max(0, metrics.rows - 1) * viewportMetrics.gapSize
+  const widthScale = (viewportMetrics.width - horizontalGapWidth) / (metrics.columns * viewportMetrics.cellSize)
+  const heightScale = (viewportMetrics.height - verticalGapHeight) / (metrics.rows * viewportMetrics.cellSize)
   return Math.max(0.16, Math.min(minBoardScale, widthScale, heightScale))
 }
 
