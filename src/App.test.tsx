@@ -101,7 +101,7 @@ describe('App', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: '设置与暂停' })).getByRole('button', { name: '第 2 关' }))
 
     expect(getZoomSlider()).toHaveValue('0')
-    expect(getBoardScale()).toBe(0.43)
+    expect(getBoardScale()).toBe(0.41)
   })
 
   it('partially moves a large selected board group when the tray has limited space', async () => {
@@ -188,9 +188,10 @@ describe('App', () => {
     expect(appCss).not.toMatch(/\.gem\s*\{[^}]*border-radius:\s*\d+px/)
   })
 
-  it('renders adjacent same-color target cells as continuous color regions', () => {
+  it('renders adjacent same-color target cells with a slight gap', () => {
     const appCss = readFileSync('src/App.css', 'utf-8')
 
+    expect(appCss).toMatch(/\.board\s*\{[^}]*gap:\s*1px/)
     expect(appCss).toMatch(/\.cell\s*\{[^}]*border-radius:\s*0/)
     expect(appCss).toMatch(/\.cell\s*\{[^}]*box-shadow:\s*none/)
     expect(appCss).toMatch(/\.cell-button\s*\{[^}]*border:\s*0/)
