@@ -3,6 +3,7 @@ import './App.css'
 import {
   colorLabel,
   createTray,
+  expandTray,
   findConnectedGemGroup,
   isLevelSolved,
   moveBoardSelectionToBoard,
@@ -13,7 +14,8 @@ import type { Cell, GemColor, Level, Selection, TraySlot } from './game/types'
 import { getCompletionProgress } from './levelProgression'
 import { levels } from './levels'
 
-const traySize = 12
+const initialTraySize = 12
+const trayExpansionSize = 4
 const flightDurationMs = 260
 const flightStaggerMs = 20
 const gemVisualSizeRatio = 0.72
@@ -61,7 +63,8 @@ type BoardViewportMetrics = {
 function App() {
   const [levelIndex, setLevelIndex] = useState(0)
   const [cells, setCells] = useState<Cell[]>(() => cloneCells(levels[0]))
-  const [tray, setTray] = useState<TraySlot[]>(() => createTray(traySize))
+  const [tray, setTray] = useState<TraySlot[]>(() => createTray(initialTraySize))
+  const [isTrayExpanded, setIsTrayExpanded] = useState(false)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [toast, setToast] = useState('点击棋盘上的宝石，选中同色连通块')
   const [timeLeft, setTimeLeft] = useState(levels[0].timeLimitSeconds)
@@ -130,7 +133,8 @@ function App() {
     const nextLevel = levels[nextIndex]
     setLevelIndex(nextIndex)
     setCells(cloneCells(nextLevel))
-    setTray(createTray(traySize))
+    setTray(createTray(initialTraySize))
+    setIsTrayExpanded(false)
     setSelection(null)
     queuedSelectionRef.current = null
     setFlyingGems([])
@@ -308,6 +312,13 @@ function App() {
     setToast('已取消选择')
   }
 
+  const expandTrayStorage = () => {
+    if (isTrayExpanded || isAnimating || status !== 'playing') return
+    setTray((currentTray) => expandTray(currentTray, trayExpansionSize))
+    setIsTrayExpanded(true)
+    setToast(`暂存区已增加 ${trayExpansionSize} 个槽位`)
+  }
+
   return (
     <main className="game-shell">
       <header className="hud" aria-label="关卡状态">
@@ -352,6 +363,9 @@ function App() {
         tray={tray}
         selectedColor={selection?.source === 'tray' ? selection.color : undefined}
         hiddenSlotIds={hiddenTraySlotIds}
+        expanded={isTrayExpanded}
+        expansionDisabled={isAnimating || status !== 'playing'}
+        onExpand={expandTrayStorage}
         onTrayClick={handleTrayClick}
         registerSlotRef={(id, node) => {
           trayRefs.current[id] = node
@@ -540,14 +554,19 @@ type TrayProps = {
   tray: TraySlot[]
   selectedColor?: GemColor
   hiddenSlotIds: Set<string>
+  expanded: boolean
+  expansionDisabled: boolean
+  onExpand: () => void
   onTrayClick: (slot: TraySlot) => void
   registerSlotRef: (id: string, node: HTMLButtonElement | null) => void
 }
 
-function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef }: TrayProps) {
+function Tray({ tray, selectedColor, hiddenSlotIds, expanded, expansionDisabled, onExpand, onTrayClick, registerSlotRef }: TrayProps) {
+  const trayGridStyle = { '--tray-columns': tray.length } as CSSProperties
+
   return (
     <section className="tray-panel" aria-label="钻石暂存区">
-      <div className="tray-row tray-storage">
+      <div className="tray-row tray-storage" style={trayGridStyle}>
         {tray.map((slot, index) => (
           <button
             ref={(node) => registerSlotRef(slot.id, node)}
@@ -561,13 +580,19 @@ function Tray({ tray, selectedColor, hiddenSlotIds, onTrayClick, registerSlotRef
           </button>
         ))}
       </div>
-      <div className="tray-row tray-shadow" aria-hidden="true">
+      <div className="tray-row tray-shadow" aria-hidden="true" style={trayGridStyle}>
         {tray.map((slot) => (
           <span key={`${slot.id}-shadow`} className="tray-placeholder" />
         ))}
       </div>
-      <button className="expand-button" type="button" aria-label="扩容暂未开放">
-        扩容
+      <button
+        className="expand-button"
+        type="button"
+        aria-label={expanded ? '暂存区已扩容' : '扩容暂未开放'}
+        disabled={expanded || expansionDisabled}
+        onClick={onExpand}
+      >
+        {expanded ? '已扩容' : `扩容+${trayExpansionSize}`}
       </button>
     </section>
   )
