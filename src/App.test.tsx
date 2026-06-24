@@ -71,6 +71,32 @@ describe('App', () => {
     expect(document.querySelectorAll('.tray-slot')).toHaveLength(12)
   })
 
+  it('expands the tray once by adding four empty slots and disables the expand button', () => {
+    render(<App />)
+
+    const expandButton = screen.getByRole('button', { name: '扩容暂未开放' })
+
+    fireEvent.click(expandButton)
+
+    expect(document.querySelectorAll('.tray-slot')).toHaveLength(16)
+    expect(document.querySelector<HTMLElement>('.tray-storage')?.style.getPropertyValue('--tray-columns')).toBe('16')
+    expect(screen.getByRole('button', { name: '暂存区已扩容' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '暂存槽 13 空' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '暂存槽 16 空' })).toBeInTheDocument()
+  })
+
+  it('resets expanded tray capacity when restarting the current level', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '扩容暂未开放' }))
+    expect(document.querySelectorAll('.tray-slot')).toHaveLength(16)
+
+    fireEvent.click(screen.getByRole('button', { name: '重开本关' }))
+
+    expect(document.querySelectorAll('.tray-slot')).toHaveLength(12)
+    expect(screen.getByRole('button', { name: '扩容暂未开放' })).toBeEnabled()
+  })
+
   it('starts each level with the zoom handle at the bottom and the board minimized', () => {
     render(<App />)
 

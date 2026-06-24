@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createTray,
+  expandTray,
   findConnectedGemGroup,
   getMovePriorityCellIds,
   isLevelSolved,
@@ -94,6 +95,17 @@ describe('game logic', () => {
     expect(result.tray.filter((slot) => slot.gemColor === 'red')).toHaveLength(2)
     expect(result.cells.find(({ id }) => id === '1,1')?.gemColor).toBeUndefined()
     expect(result.cells.find(({ id }) => id === '0,0')?.gemColor).toBe('red')
+  })
+
+  it('adds empty tray slots after the existing fixed slots', () => {
+    const tray = createTray(12)
+
+    const expandedTray = expandTray(tray, 4)
+
+    expect(expandedTray).toHaveLength(16)
+    expect(expandedTray.slice(0, 12)).toEqual(tray)
+    expect(expandedTray.slice(12).map(({ id }) => id)).toEqual(['slot-13', 'slot-14', 'slot-15', 'slot-16'])
+    expect(expandedTray.slice(12).every((slot) => !slot.gemColor)).toBe(true)
   })
 
   it('moves tray gems only into matching target cells', () => {

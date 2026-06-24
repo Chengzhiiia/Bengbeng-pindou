@@ -17,6 +17,15 @@ export function createTray(size: number): TraySlot[] {
   return Array.from({ length: size }, (_, index) => ({ id: `slot-${index + 1}` }))
 }
 
+export function expandTray(tray: TraySlot[], additionalSlots: number): TraySlot[] {
+  if (additionalSlots <= 0) return tray
+  const startIndex = tray.length
+  return [
+    ...tray,
+    ...Array.from({ length: additionalSlots }, (_, index) => ({ id: `slot-${startIndex + index + 1}` })),
+  ]
+}
+
 export function findConnectedGemGroup(cells: Cell[], startCellId: string): string[] {
   const start = cells.find(({ id }) => id === startCellId)
   if (!isMismatchedGem(start)) return []

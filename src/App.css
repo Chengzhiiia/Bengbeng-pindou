@@ -399,7 +399,7 @@
 
 .tray-row {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--tray-columns, 12), minmax(0, 1fr));
   gap: 5px;
 }
 
@@ -451,6 +451,15 @@
   font-weight: 900;
   text-shadow: 0 2px 0 #36864b;
   box-shadow: 0 3px 0 #337e49;
+}
+
+.expand-button:disabled {
+  border-color: #8f9b93;
+  color: #f5f7f3;
+  background: linear-gradient(180deg, #b7c3ba, #87948d);
+  text-shadow: 0 2px 0 #6f7c73;
+  box-shadow: 0 3px 0 #6d7a70;
+  cursor: default;
 }
 
 .modal-backdrop {
